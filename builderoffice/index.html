@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="BuilderOffice - 건설현장 비용, 인원, 자재 통합 관리 시스템">
+  <title>BuilderOffice | 건설현장 관리</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="logo-icon">🏗️</div>
+          <div class="logo-text">
+            <div class="logo-title">BuilderOffice</div>
+            <div class="logo-subtitle">Construction Manager</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">메인</div>
+        <a class="nav-item active" data-page="dashboard" href="#dashboard">
+          <span class="nav-icon">📊</span>
+          대시보드
+        </a>
+
+        <div class="nav-section-title">관리</div>
+        <a class="nav-item" data-page="costs" href="#costs">
+          <span class="nav-icon">💰</span>
+          비용 관리
+        </a>
+        <a class="nav-item" data-page="personnel" href="#personnel">
+          <span class="nav-icon">👷</span>
+          인원 관리
+        </a>
+        <a class="nav-item" data-page="materials" href="#materials">
+          <span class="nav-icon">📦</span>
+          자재 관리
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="current-date" id="currentDate"></div>
+      </div>
+    </aside>
+
+    <!-- Sidebar overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="main-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+          <h1 class="page-title" id="pageTitle">📊 <span>대시보드</span></h1>
+        </div>
+        <div class="header-right">
+          <div class="header-search">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="검색..." id="globalSearch">
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <div class="page-content" id="pageContent">
+        <!-- Dynamic content loaded here -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent"></div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="js/store.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/costs.js"></script>
+  <script src="js/personnel.js"></script>
+  <script src="js/materials.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
