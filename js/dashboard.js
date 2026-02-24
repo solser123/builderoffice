@@ -51,7 +51,7 @@ var Dashboard = {
                 '<div class="mat-row">' +
                 '<div class="mat-info">' +
                 '<span class="mat-name">' + m.name + '</span>' +
-                '<span class="mat-stock ' + statusClass + '">' + curS + m.spec + ' (최소' + minS + ')</span>' +
+                '<span class="mat-stock ' + statusClass + '">' + curS + (m.unit ? ' ' + m.unit : '') + ' / 최소 ' + minS + '</span>' +
                 '</div>' +
                 '<div class="mat-bar-wrap"><div class="mat-bar ' + statusClass + '" style="width:' + stockPct + '%"></div></div>' +
                 '</div>';
