@@ -266,6 +266,108 @@ const Store = {
         return new Date().toISOString().split('T')[0];
     },
 
+    // === Gongsu (공수) Management ===
+    GONGSU_KEY: 'builderoffice_gongsu',
+
+    getGongsuData: function () {
+        return this._get(this.GONGSU_KEY) || {};
+    },
+
+    _saveGongsuData: function (data) {
+        try {
+            localStorage.setItem(this.GONGSU_KEY, JSON.stringify(data));
+        } catch (e) {
+            console.error('Error saving gongsu:', e);
+        }
+    },
+
+    // key format: "personId_YYYY-MM-DD"
+    setGongsu: function (personId, dateStr, value) {
+        var data = this.getGongsuData();
+        var key = personId + '_' + dateStr;
+        if (value === 0 || value === '' || value === null) {
+            delete data[key];
+        } else {
+            data[key] = Number(value);
+        }
+        this._saveGongsuData(data);
+    },
+
+    getGongsu: function (personId, dateStr) {
+        var data = this.getGongsuData();
+        return data[personId + '_' + dateStr] || 0;
+    },
+
+    // Returns: { personId: { 1: val, 2: val, ..., total: X }, ... }
+    getMonthlyGongsu: function (year, month) {
+        var data = this.getGongsuData();
+        var prefix = year + '-' + String(month).padStart(2, '0');
+        var result = {};
+        var personnel = this.getPersonnel();
+
+        for (var i = 0; i < personnel.length; i++) {
+            var pid = personnel[i].id;
+            result[pid] = { total: 0 };
+        }
+
+        for (var k in data) {
+            if (!data.hasOwnProperty(k)) continue;
+            var parts = k.split('_');
+            var pid2 = parts[0];
+            var dt = parts.slice(1).join('_');
+            if (dt.startsWith(prefix) && result[pid2]) {
+                var day = parseInt(dt.split('-')[2], 10);
+                result[pid2][day] = data[k];
+                result[pid2].total += data[k];
+            }
+        }
+
+        return result;
+    },
+
+    getDaysInMonth: function (year, month) {
+        return new Date(year, month, 0).getDate();
+    },
+
+    getDayOfWeek: function (year, month, day) {
+        return new Date(year, month - 1, day).getDay(); // 0=Sun,6=Sat
+    },
+
+    // === 2026 Insurance Rates (근로자 부담분) ===
+    INSURANCE_RATES: {
+        nationalPension: 0.0475,      // 국민연금 4.75%
+        healthInsurance: 0.03595,     // 건강보험 3.595%
+        longTermCare: 0.1295,         // 장기요양 (건강보험료의 12.95%)
+        employmentInsurance: 0.009,   // 고용보험 0.9%
+        residentTax: 0.1             // 주민세 (소득세의 10%, 간이)
+    },
+
+    calcInsurance: function (grossPay) {
+        var r = this.INSURANCE_RATES;
+        var pension = Math.round(grossPay * r.nationalPension);
+        var health = Math.round(grossPay * r.healthInsurance);
+        var longCare = Math.round(health * r.longTermCare);
+        var employment = Math.round(grossPay * r.employmentInsurance);
+
+        // 간이세액 (일용직 기준 간소화: 총 보험료의 약 3% 수준으로 근사)
+        var incomeTax = Math.round(grossPay * 0.027);
+        var residentTax = Math.round(incomeTax * r.residentTax);
+
+        var totalDeduction = pension + health + longCare + employment + incomeTax + residentTax;
+
+        return {
+            grossPay: grossPay,
+            pension: pension,
+            health: health,
+            longCare: longCare,
+            employment: employment,
+            incomeTax: incomeTax,
+            residentTax: residentTax,
+            totalDeduction: totalDeduction,
+            netPay: grossPay - totalDeduction
+        };
+    },
+
     // === Categories ===
     COST_CATEGORIES: ['인건비', '자재비', '장비비', '외주비', '운송비', '기타'],
     JOB_TYPES: ['철근공', '형틀공', '콘크리트공', '미장공', '방수공', '도장공', '전기공', '배관공', '용접공', '장비기사', '일반작업자', '관리자'],

@@ -825,3 +825,323 @@ body.vibrant-mode::before {
         display: none;
     }
 }
+
+/* =======================================
+   공수표 (Gongsu Table) Styles
+   ======================================= */
+.gongsu-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px 0;
+}
+
+.gongsu-month-label {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 180px;
+    text-align: center;
+}
+
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    border-radius: 8px;
+}
+
+.gongsu-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 70vh;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.gongsu-table {
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    min-width: 1200px;
+    width: 100%;
+}
+
+.gongsu-table th,
+.gongsu-table td {
+    border: 1px solid rgba(203, 213, 225, 0.6);
+    text-align: center;
+    padding: 4px 2px;
+    white-space: nowrap;
+}
+
+.gongsu-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.gongsu-hdr th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    padding: 6px 3px;
+}
+
+.gs-no {
+    width: 32px;
+    min-width: 32px;
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.gs-name {
+    width: 70px;
+    min-width: 70px;
+    position: sticky;
+    left: 32px;
+    z-index: 3;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    font-weight: 600;
+}
+
+tbody .gs-no {
+    background: var(--bg-secondary) !important;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+tbody .gs-name {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary);
+    text-align: left;
+    padding-left: 6px;
+}
+
+.gs-day {
+    width: 36px;
+    min-width: 36px;
+}
+
+.gs-day-num {
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.gs-dow {
+    font-size: 0.65rem;
+    opacity: 0.8;
+}
+
+.gs-sat {
+    background-color: rgba(59, 130, 246, 0.08) !important;
+    color: #3b82f6;
+}
+
+.gs-sun {
+    background-color: rgba(239, 68, 68, 0.08) !important;
+    color: #ef4444;
+}
+
+.gongsu-hdr .gs-sat {
+    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+    color: #bfdbfe;
+}
+
+.gongsu-hdr .gs-sun {
+    background: linear-gradient(135deg, #ef4444 0%, #f97316 100%) !important;
+    color: #fecaca;
+}
+
+.gs-cell {
+    cursor: pointer;
+    transition: background 0.15s;
+    height: 30px;
+    font-weight: 500;
+}
+
+.gs-cell:hover {
+    background-color: rgba(99, 102, 241, 0.12) !important;
+}
+
+.gs-filled {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.gs-total {
+    background: rgba(16, 185, 129, 0.15) !important;
+    font-weight: 700;
+    min-width: 50px;
+}
+
+.gs-total-cell {
+    font-weight: 700;
+    color: #059669;
+    background: rgba(16, 185, 129, 0.06);
+}
+
+.gongsu-footer td {
+    background: rgba(99, 102, 241, 0.06);
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-top: 2px solid var(--border-color);
+}
+
+.gs-input {
+    width: 34px;
+    height: 26px;
+    border: 2px solid #6366f1;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: white;
+    outline: none;
+    padding: 0;
+}
+
+.gs-input:focus {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+/* =======================================
+   노무비 대장 (Payroll Table) Styles
+   ======================================= */
+.payroll-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 75vh;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.payroll-table {
+    border-collapse: collapse;
+    font-size: 0.72rem;
+    min-width: 2000px;
+    width: 100%;
+}
+
+.payroll-table th,
+.payroll-table td {
+    border: 1px solid rgba(203, 213, 225, 0.6);
+    text-align: center;
+    padding: 4px 3px;
+    white-space: nowrap;
+}
+
+.payroll-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.payroll-hdr th {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5987 100%);
+    color: white;
+    font-weight: 600;
+    padding: 6px 3px;
+}
+
+.payroll-hdr2 th {
+    background: linear-gradient(135deg, #2d5987 0%, #3a6f9f 100%);
+    color: #bfdbfe;
+    font-weight: 500;
+    font-size: 0.68rem;
+    padding: 3px 2px;
+}
+
+.pr-fixed {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: white;
+    font-weight: 500;
+}
+
+.payroll-hdr .pr-fixed,
+.payroll-hdr2 .pr-fixed {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5987 100%) !important;
+}
+
+.pr-name {
+    text-align: left;
+    padding-left: 6px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.pr-rid {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+}
+
+.pr-day {
+    width: 28px;
+    min-width: 28px;
+}
+
+.pr-day-cell {
+    font-weight: 500;
+    height: 28px;
+}
+
+.pr-dow {
+    font-size: 0.6rem;
+}
+
+.pr-num {
+    font-weight: 600;
+    white-space: nowrap;
+    min-width: 70px;
+}
+
+.pr-gross {
+    color: #1e40af;
+    background: rgba(59, 130, 246, 0.06);
+}
+
+.pr-ded {
+    color: #dc2626;
+    font-size: 0.68rem;
+    background: rgba(239, 68, 68, 0.03);
+}
+
+.pr-total-ded {
+    color: #dc2626;
+    font-weight: 700;
+    background: rgba(239, 68, 68, 0.06);
+}
+
+.pr-net {
+    color: #059669 !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+    font-weight: 700 !important;
+}
+
+.pr-ins-header {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #fecaca !important;
+}
+
+.pr-ins-sub {
+    background: rgba(239, 68, 68, 0.1) !important;
+    min-width: 65px;
+}
+
+.payroll-footer td {
+    background: rgba(30, 58, 95, 0.06);
+    font-weight: 700;
+    border-top: 2px solid var(--border-color);
+}
+
+.payroll-info {
+    padding: 12px 16px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-color);
+    background: rgba(99, 102, 241, 0.03);
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
