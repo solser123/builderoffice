@@ -26,8 +26,11 @@ var App = {
         this._updateDate();
 
         // Mobile menu
-        document.getElementById('mobileMenuBtn').addEventListener('click', function () { self.toggleMobileMenu(); });
-        document.getElementById('sidebarOverlay').addEventListener('click', function () { self.closeMobileMenu(); });
+        var mobileBtn = document.getElementById('mobileMenuBtn');
+        if (mobileBtn) mobileBtn.addEventListener('click', function () { self.toggleMobileMenu(); });
+
+        var overlay = document.getElementById('sidebarOverlay');
+        if (overlay) overlay.addEventListener('click', function () { self.closeMobileMenu(); });
     },
 
     handleRoute: function () {
@@ -48,8 +51,11 @@ var App = {
         var content = document.getElementById('pageContent');
         var titleEl = document.getElementById('pageTitle');
 
-        titleEl.innerHTML = page.icon + ' <span>' + page.title + '</span>';
+        if (titleEl) {
+            titleEl.innerHTML = page.icon + ' <span>' + page.title + '</span>';
+        }
         content.innerHTML = mod.render();
+        window.scrollTo(0, 0);
     },
 
     refreshPage: function () {
@@ -84,13 +90,17 @@ var App = {
 
     // === Mobile Menu ===
     toggleMobileMenu: function () {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('sidebarOverlay').classList.toggle('active');
+        var sidebar = document.getElementById('sidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        if (sidebar) sidebar.classList.toggle('open');
+        if (overlay) overlay.classList.toggle('active');
     },
 
     closeMobileMenu: function () {
-        document.getElementById('sidebar').classList.remove('open');
-        document.getElementById('sidebarOverlay').classList.remove('active');
+        var sidebar = document.getElementById('sidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        if (sidebar) sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
     },
 
     // === Modal ===

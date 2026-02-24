@@ -1,76 +1,55 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="BuilderOffice - 건설현장 비용, 인원, 자재 통합 관리 시스템">
-  <title>BuilderOffice | 건설현장 관리</title>
+  <title>BuilderOffice | V-ERP Portal</title>
   <link rel="stylesheet" href="css/styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+  <link rel="stylesheet" href="css/portal.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
 </head>
-<body>
+
+<body class="vibrant-mode">
+  <!-- Dynamic Background Blobs for Option B Style -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
   <div class="app-container">
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-logo">
-          <div class="logo-icon">🏗️</div>
-          <div class="logo-text">
-            <div class="logo-title">BuilderOffice</div>
-            <div class="logo-subtitle">Construction Manager</div>
-          </div>
+
+    <!-- Top Global Navigation Bar (Ecount Style Menu integration) -->
+    <header class="top-gnb">
+      <div class="gnb-left">
+        <a href="#dashboard" class="logo nav-item" data-page="dashboard">
+          <span class="logo-icon">🏗️</span>
+          <span class="logo-text">BuilderOffice V-ERP</span>
+        </a>
+        <nav class="gnb-menu">
+          <a href="#costs" class="nav-item" data-page="costs">비용 관리</a>
+          <a href="#personnel" class="nav-item" data-page="personnel">인원 관리</a>
+          <a href="#materials" class="nav-item" data-page="materials">자재 관리</a>
+        </nav>
+      </div>
+      <div class="gnb-right">
+        <div class="header-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="통합 검색..." id="globalSearch">
         </div>
+        <button class="icon-btn" title="알림">🔔</button>
+        <button class="icon-btn" title="내 정보/설정">👤</button>
       </div>
+    </header>
 
-      <nav class="sidebar-nav">
-        <div class="nav-section-title">메인</div>
-        <a class="nav-item active" data-page="dashboard" href="#dashboard">
-          <span class="nav-icon">📊</span>
-          대시보드
-        </a>
-
-        <div class="nav-section-title">관리</div>
-        <a class="nav-item" data-page="costs" href="#costs">
-          <span class="nav-icon">💰</span>
-          비용 관리
-        </a>
-        <a class="nav-item" data-page="personnel" href="#personnel">
-          <span class="nav-icon">👷</span>
-          인원 관리
-        </a>
-        <a class="nav-item" data-page="materials" href="#materials">
-          <span class="nav-icon">📦</span>
-          자재 관리
-        </a>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="current-date" id="currentDate"></div>
-      </div>
-    </aside>
-
-    <!-- Sidebar overlay for mobile -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <main class="main-content">
-      <!-- Header -->
-      <header class="main-header">
-        <div class="header-left">
-          <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
-          <h1 class="page-title" id="pageTitle">📊 <span>대시보드</span></h1>
-        </div>
-        <div class="header-right">
-          <div class="header-search">
-            <span class="search-icon">🔍</span>
-            <input type="text" placeholder="검색..." id="globalSearch">
-          </div>
-        </div>
-      </header>
-
-      <!-- Page Content -->
+      <!-- Portal Home / Dashboard Page Content -->
       <div class="page-content" id="pageContent">
-        <!-- Dynamic content loaded here -->
+        <!-- Dashboard content will be injected or initially handled by dashboard.js, but we'll put the static portal structure here to be moved to dashboard.js or kept in index.html -->
       </div>
     </main>
   </div>
@@ -91,4 +70,5 @@
   <script src="js/materials.js"></script>
   <script src="js/app.js"></script>
 </body>
+
 </html>
