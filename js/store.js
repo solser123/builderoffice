@@ -270,7 +270,16 @@ const Store = {
     GONGSU_KEY: 'builderoffice_gongsu',
 
     getGongsuData: function () {
-        return this._get(this.GONGSU_KEY) || {};
+        try {
+            var raw = localStorage.getItem(this.GONGSU_KEY);
+            if (!raw) return {};
+            var parsed = JSON.parse(raw);
+            // _get()은 기본값으로 배열을 반환하므로, 배열이면 빈 객체로 교체
+            if (Array.isArray(parsed)) return {};
+            return parsed;
+        } catch (e) {
+            return {};
+        }
     },
 
     _saveGongsuData: function (data) {
