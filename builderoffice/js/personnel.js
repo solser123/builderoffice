@@ -86,11 +86,12 @@ var Personnel = {
         var personnel = Store.getPersonnel().filter(function (p) { return p.status === '활성'; });
         var monthData = Store.getMonthlyGongsu(y, m);
 
-        // Month navigator
+        // Month navigator + Excel download
         var nav = '<div class="gongsu-nav">' +
             '<button class="btn btn-secondary btn-sm" onclick="Personnel.changeMonth(-1)">◀</button>' +
             '<span class="gongsu-month-label">' + y + '년 ' + m + '월 공수표</span>' +
             '<button class="btn btn-secondary btn-sm" onclick="Personnel.changeMonth(1)">▶</button>' +
+            '<button class="btn btn-primary btn-sm" onclick="Personnel.exportGongsuExcel()" style="margin-left:16px;">📥 엑셀 다운로드</button>' +
             '</div>';
 
         // Header row: No, 성명, 1~31, 기타, 합계
@@ -128,8 +129,8 @@ var Personnel = {
                 dayTotals[day] += val;
 
                 rows += '<td class="gs-cell ' + cellClass + (val > 0 ? ' gs-filled' : '') + '" ' +
-                    'onclick="Personnel.editGongsuCell(\'' + p.id + '\',\'' + dateStr + '\', this)" ' +
-                    'data-pid="' + p.id + '" data-date="' + dateStr + '">' +
+                    'onclick="Personnel.editGongsuCell(\'' + p.id + '\',\'' + dateStr + '\', this, ' + pi + ', ' + day + ')" ' +
+                    'data-pid="' + p.id + '" data-date="' + dateStr + '" data-row="' + pi + '" data-day="' + day + '">' +
                     displayVal + '</td>';
             }
             rows += '<td class="gs-total-cell"></td>';
@@ -160,7 +161,7 @@ var Personnel = {
         App.refreshPage();
     },
 
-    editGongsuCell: function (personId, dateStr, cell) {
+    editGongsuCell: function (personId, dateStr, cell, rowIdx, dayIdx) {
         var currentVal = Store.getGongsu(personId, dateStr);
         var input = document.createElement('input');
         input.type = 'number';
@@ -174,19 +175,126 @@ var Personnel = {
         input.focus();
         input.select();
 
-        var save = function () {
+        var saveAndMove = function (moveToNext) {
             var v = parseFloat(input.value) || 0;
             if (v < 0) v = 0;
             if (v > 5) v = 5;
             Store.setGongsu(personId, dateStr, v);
-            App.refreshPage();
+            if (moveToNext) {
+                Personnel._moveToNextCell(rowIdx, dayIdx);
+            } else {
+                App.refreshPage();
+            }
         };
 
-        input.addEventListener('blur', save);
+        input.addEventListener('blur', function () {
+            var v = parseFloat(input.value) || 0;
+            if (v < 0) v = 0;
+            if (v > 5) v = 5;
+            Store.setGongsu(personId, dateStr, v);
+            // Don't refresh on blur if a next cell click caused it
+        });
         input.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { save(); }
+            if (e.key === 'Enter') { e.preventDefault(); saveAndMove(true); }
+            if (e.key === 'Tab') { e.preventDefault(); saveAndMove(true); }
             if (e.key === 'Escape') { App.refreshPage(); }
         });
+    },
+
+    _moveToNextCell: function (rowIdx, dayIdx) {
+        // Save current, then refresh and open the next cell
+        var personnel = Store.getPersonnel().filter(function (p) { return p.status === '활성'; });
+        var y = this.gongsuYear;
+        var m = this.gongsuMonth;
+        var daysInMonth = Store.getDaysInMonth(y, m);
+        var nextDay = dayIdx + 1;
+        var nextRow = rowIdx;
+
+        if (nextDay > daysInMonth) {
+            nextDay = 1;
+            nextRow = rowIdx + 1;
+        }
+        if (nextRow >= personnel.length) {
+            // End of table, just refresh
+            App.refreshPage();
+            return;
+        }
+
+        var nextPerson = personnel[nextRow];
+        var nextDateStr = y + '-' + String(m).padStart(2, '0') + '-' + String(nextDay).padStart(2, '0');
+
+        App.refreshPage();
+        // After refresh, find and click the next cell
+        setTimeout(function () {
+            var nextCell = document.querySelector('[data-pid="' + nextPerson.id + '"][data-day="' + nextDay + '"]');
+            if (nextCell) {
+                Personnel.editGongsuCell(nextPerson.id, nextDateStr, nextCell, nextRow, nextDay);
+            }
+        }, 50);
+    },
+
+    // === Excel Export ===
+    exportGongsuExcel: function () {
+        var y = this.gongsuYear;
+        var m = this.gongsuMonth;
+        var daysInMonth = Store.getDaysInMonth(y, m);
+        var personnel = Store.getPersonnel().filter(function (p) { return p.status === '활성'; });
+        var monthData = Store.getMonthlyGongsu(y, m);
+        var dowNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+        // BOM for UTF-8
+        var csv = '\uFEFF';
+        csv += '◇ 공수표,,,,';
+        for (var x = 5; x <= daysInMonth + 2; x++) csv += ',';
+        csv += y + '년 ' + m + '월\n';
+
+        // Header row 1: No, 성명, days..., 기타, 합계
+        csv += 'No.,성 명';
+        for (var d = 1; d <= daysInMonth; d++) {
+            csv += ',' + String(d).padStart(2, '0');
+        }
+        csv += ',기타,계\n';
+
+        // Header row 2: dow
+        csv += ',';
+        for (var d2 = 1; d2 <= daysInMonth; d2++) {
+            var dow = Store.getDayOfWeek(y, m, d2);
+            csv += ',' + dowNames[dow];
+        }
+        csv += ',,\n';
+
+        // Data rows
+        for (var pi = 0; pi < personnel.length; pi++) {
+            var p = personnel[pi];
+            var pd = monthData[p.id] || { total: 0 };
+            csv += (pi + 1) + ',' + p.name;
+            for (var day = 1; day <= daysInMonth; day++) {
+                var v = pd[day] || 0;
+                csv += ',' + (v > 0 ? v.toFixed(1) : '');
+            }
+            csv += ',' + ',' + (pd.total > 0 ? pd.total.toFixed(1) : '0') + '\n';
+        }
+
+        // Totals
+        csv += ',계';
+        var grandTotal = 0;
+        for (var fd = 1; fd <= daysInMonth; fd++) {
+            var dayTotal = 0;
+            for (var qi = 0; qi < personnel.length; qi++) {
+                var qpd = monthData[personnel[qi].id] || {};
+                dayTotal += qpd[fd] || 0;
+            }
+            csv += ',' + (dayTotal > 0 ? dayTotal.toFixed(1) : '-');
+            grandTotal += dayTotal;
+        }
+        csv += ',,' + grandTotal.toFixed(1) + '\n';
+
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = '공수표_' + y + '년' + m + '월.csv';
+        link.click();
+        App.showToast('공수표가 다운로드되었습니다.', 'success');
     },
 
     // ==========================================
@@ -205,36 +313,24 @@ var Personnel = {
             '<button class="btn btn-secondary btn-sm" onclick="Personnel.changeMonth(1)">▶</button>' +
             '</div>';
 
-        // Header
+        // Header (No day columns - just summary)
         var hdr = '<tr class="payroll-hdr">' +
-            '<th rowspan="2" class="pr-fixed">직별</th>' +
-            '<th rowspan="2" class="pr-fixed">성 명</th>' +
-            '<th rowspan="2" class="pr-fixed">주민등록번호</th>';
-
-        // Day columns
-        for (var d = 1; d <= daysInMonth; d++) {
-            hdr += '<th class="pr-day">' + d + '</th>';
-        }
-
-        hdr += '<th rowspan="2" class="pr-num">단가</th>' +
-            '<th rowspan="2" class="pr-num">출역합</th>' +
-            '<th rowspan="2" class="pr-num">근로일수</th>' +
-            '<th rowspan="2" class="pr-num">노무비</th>' +
-            '<th colspan="4" class="pr-ins-header">4대보험 공제</th>' +
-            '<th rowspan="2" class="pr-num">주민세</th>' +
-            '<th rowspan="2" class="pr-num">공제합계</th>' +
-            '<th rowspan="2" class="pr-num pr-net">차감지급액</th>' +
+            '<th class="pr-fixed">No.</th>' +
+            '<th class="pr-fixed">직별</th>' +
+            '<th class="pr-fixed">성 명</th>' +
+            '<th class="pr-fixed">주민등록번호</th>' +
+            '<th class="pr-num">단가</th>' +
+            '<th class="pr-num">출역합(공수)</th>' +
+            '<th class="pr-num">근로일수</th>' +
+            '<th class="pr-num">노무비</th>' +
+            '<th class="pr-ins-sub">국민연금</th>' +
+            '<th class="pr-ins-sub">건강보험</th>' +
+            '<th class="pr-ins-sub">장기요양</th>' +
+            '<th class="pr-ins-sub">고용보험</th>' +
+            '<th class="pr-num">주민세</th>' +
+            '<th class="pr-num">공제합계</th>' +
+            '<th class="pr-num pr-net">차감지급액</th>' +
             '</tr>';
-
-        // Second header row for insurance sub-columns
-        hdr += '<tr class="payroll-hdr2">';
-        for (var dd = 1; dd <= daysInMonth; dd++) {
-            var dow = Store.getDayOfWeek(y, m, dd);
-            var dowNm = ['일', '월', '화', '수', '목', '금', '토'];
-            var dc = dow === 0 ? 'gs-sun' : dow === 6 ? 'gs-sat' : '';
-            hdr += '<th class="pr-dow ' + dc + '">' + dowNm[dow] + '</th>';
-        }
-        hdr += '<th class="pr-ins-sub">국민연금</th><th class="pr-ins-sub">건강보험</th><th class="pr-ins-sub">장기요양</th><th class="pr-ins-sub">고용보험</th></tr>';
 
         // Data rows
         var rows = '';
@@ -246,7 +342,6 @@ var Personnel = {
             var totalGongsu = pd.total || 0;
             var workDays = 0;
 
-            // Count actual work days (any day with gongsu > 0)
             for (var wd = 1; wd <= daysInMonth; wd++) {
                 if (pd[wd] && pd[wd] > 0) workDays++;
             }
@@ -267,17 +362,10 @@ var Personnel = {
             totals.net += ins.netPay;
 
             rows += '<tr>';
+            rows += '<td class="pr-num">' + (pi + 1) + '</td>';
             rows += '<td class="pr-fixed"><span class="badge badge-blue">' + p.jobType + '</span></td>';
             rows += '<td class="pr-fixed pr-name">' + p.name + '</td>';
             rows += '<td class="pr-fixed pr-rid">' + (p.residentId || '-') + '</td>';
-
-            for (var day = 1; day <= daysInMonth; day++) {
-                var v = pd[day] || 0;
-                var dow2 = Store.getDayOfWeek(y, m, day);
-                var cc = dow2 === 0 ? 'gs-sun' : dow2 === 6 ? 'gs-sat' : '';
-                rows += '<td class="pr-day-cell ' + cc + '">' + (v > 0 ? v.toFixed(1) : '') + '</td>';
-            }
-
             rows += '<td class="pr-num">' + Store.formatCurrency(wage) + '</td>';
             rows += '<td class="pr-num">' + totalGongsu.toFixed(1) + '</td>';
             rows += '<td class="pr-num">' + workDays + '</td>';
@@ -294,8 +382,7 @@ var Personnel = {
 
         // Totals footer
         var tfooter = '<tr class="payroll-footer">';
-        tfooter += '<td class="pr-fixed" colspan="3"><strong>합 계</strong></td>';
-        for (var td2 = 1; td2 <= daysInMonth; td2++) tfooter += '<td></td>';
+        tfooter += '<td colspan="4"><strong>합 계</strong></td>';
         tfooter += '<td class="pr-num"></td>';
         tfooter += '<td class="pr-num"><strong>' + totals.gongsu.toFixed(1) + '</strong></td>';
         tfooter += '<td class="pr-num"><strong>' + totals.workDays + '</strong></td>';
