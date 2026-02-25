@@ -175,28 +175,26 @@ var Personnel = {
         input.focus();
         input.select();
 
-        var saveAndMove = function (moveToNext) {
-            var v = parseFloat(input.value) || 0;
-            if (v < 0) v = 0;
-            if (v > 5) v = 5;
-            Store.setGongsu(personId, dateStr, v);
-            if (moveToNext) {
-                Personnel._moveToNextCell(rowIdx, dayIdx);
-            } else {
-                App.refreshPage();
-            }
-        };
+        var movingNext = false;
 
         input.addEventListener('blur', function () {
+            if (movingNext) return; // Enter/Tab이 처리 중이면 blur 무시
             var v = parseFloat(input.value) || 0;
             if (v < 0) v = 0;
             if (v > 5) v = 5;
             Store.setGongsu(personId, dateStr, v);
-            // Don't refresh on blur if a next cell click caused it
+            App.refreshPage();
         });
         input.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); saveAndMove(true); }
-            if (e.key === 'Tab') { e.preventDefault(); saveAndMove(true); }
+            if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                movingNext = true;
+                var v = parseFloat(input.value) || 0;
+                if (v < 0) v = 0;
+                if (v > 5) v = 5;
+                Store.setGongsu(personId, dateStr, v);
+                Personnel._moveToNextCell(rowIdx, dayIdx);
+            }
             if (e.key === 'Escape') { App.refreshPage(); }
         });
     },
