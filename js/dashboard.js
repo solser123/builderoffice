@@ -8,6 +8,14 @@ var Dashboard = {
         var costStats = Store.getCostStats();
         var personnelStats = Store.getPersonnelStats();
         var materialStats = Store.getMaterialStats();
+        var siteStats = Store.getSiteStats();
+        var approvals = Store.getApprovals();
+        var pendingApprovals = approvals.filter(function (a) { return a.status === '대기중'; });
+        var dailyLogs = Store.getDailyLogs();
+        var todayLog = dailyLogs.find(function (l) { return l.date === Store.getToday(); });
+        var sites = Store.getSites();
+        var currentSiteId = Store.getCurrentSiteId();
+        var currentSite = currentSiteId !== 'all' ? sites.find(function (s) { return s.id === currentSiteId; }) : null;
 
         var recentCosts = Store.getCosts().slice(0, 5);
         var recentAttendance = Store.getAttendance().slice(0, 5);
@@ -62,6 +70,10 @@ var Dashboard = {
 
         var today = new Date();
         var dateStr = today.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+        var greeting = currentSite ? currentSite.name : '전체 현장';
+        var todayLogStatus = todayLog ?
+            '<span style="color:#059669;font-weight:700">✓ 오늘 일지 작성됨</span>' :
+            '<span style="color:#f59e0b;font-weight:600">⚠️ 오늘 일지 미작성</span>';
 
         return `
         <div class="bento-portal">
@@ -69,14 +81,14 @@ var Dashboard = {
             <!-- Portal Header -->
             <div class="bento-header">
                 <div class="bento-greeting">
-                    <h1>안녕하세요, <strong>김소장</strong>님 👋</h1>
-                    <p class="bento-date">${dateStr}</p>
+                    <h1>📍 <strong>${greeting}</strong></h1>
+                    <p class="bento-date">${dateStr} &nbsp;·&nbsp; ${todayLogStatus}</p>
                 </div>
                 <div class="bento-header-actions">
-                    <button class="bento-action-btn" onclick="document.querySelector('[data-page=personnel]').click()">
-                        <span>⏱️</span> 출근부 작성
+                    <button class="bento-action-btn" onclick="App.navigate('dailylog')">
+                        <span>📋</span> 현장 일지
                     </button>
-                    <button class="bento-action-btn primary" onclick="document.querySelector('[data-page=costs]').click()">
+                    <button class="bento-action-btn primary" onclick="App.navigate('costs')">
                         <span>💳</span> 비용 지출
                     </button>
                 </div>
@@ -146,61 +158,55 @@ var Dashboard = {
                         <span class="tile-title">⚡ 빠른 실행</span>
                     </div>
                     <div class="quick-grid">
-                        <div class="quick-item" onclick="document.querySelector('[data-page=personnel]').click()">
-                            <div class="quick-icon" style="background:linear-gradient(135deg,#FF9A9E,#FECFEF)">⏱️</div>
-                            <span>출근부 작성</span>
+                        <div class="quick-item" onclick="App.navigate('dailylog')">
+                            <div class="quick-icon" style="background:linear-gradient(135deg,#FF9A9E,#FECFEF)">📋</div>
+                            <span>현장 일지</span>
                         </div>
-                        <div class="quick-item" onclick="document.querySelector('[data-page=costs]').click()">
+                        <div class="quick-item" onclick="App.navigate('personnel')">
+                            <div class="quick-icon" style="background:linear-gradient(135deg,#84fab0,#8fd3f4)">👷</div>
+                            <span>공수 입력</span>
+                        </div>
+                        <div class="quick-item" onclick="App.navigate('costs')">
                             <div class="quick-icon" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)">💳</div>
                             <span>비용 지출</span>
                         </div>
-                        <div class="quick-item" onclick="document.querySelector('[data-page=materials]').click()">
-                            <div class="quick-icon" style="background:linear-gradient(135deg,#84fab0,#8fd3f4)">📦</div>
-                            <span>자재 입고</span>
-                        </div>
-                        <div class="quick-item" onclick="Toast.show('기안서 양식이 준비 중입니다.', 'info')">
-                            <div class="quick-icon" style="background:linear-gradient(135deg,#f6d365,#fda085)">📝</div>
+                        <div class="quick-item" onclick="App.navigate('approvals')">
+                            <div class="quick-icon" style="background:linear-gradient(135deg,#f6d365,#fda085)">✅</div>
                             <span>전자 결재</span>
                         </div>
-                        <div class="quick-item" onclick="document.querySelector('[data-page=personnel]').click()">
-                            <div class="quick-icon" style="background:linear-gradient(135deg,#96fbc4,#f9f586)">📋</div>
-                            <span>근로계약</span>
+                        <div class="quick-item" onclick="App.navigate('materials')">
+                            <div class="quick-icon" style="background:linear-gradient(135deg,#96fbc4,#f9f586)">📦</div>
+                            <span>자재 관리</span>
                         </div>
-                        <div class="quick-item" onclick="Toast.show('리포트 기능이 준비 중입니다.', 'info')">
-                            <div class="quick-icon" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb)">📊</div>
-                            <span>현장 보고서</span>
+                        <div class="quick-item" onclick="App.navigate('reports')">
+                            <div class="quick-icon" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb)">📈</div>
+                            <span>보고서</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- [H] 결재 대기 & 공지 -->
+                <!-- [H] 결재 대기 & 현장일지 -->
                 <div class="bento-tile tile-h glass-white">
                     <div class="tile-header">
-                        <span class="tile-title">📝 결재 대기 / 공지</span>
+                        <span class="tile-title">📝 결재 대기 · 현황</span>
+                        <a class="tile-more" onclick="App.navigate('approvals')">전체보기 →</a>
                     </div>
                     <div class="notice-list">
-                        <div class="notice-item pending">
-                            <span class="notice-badge">대기</span>
-                            <div class="notice-body">
-                                <div class="notice-title">이번 달 현장 비용 결재 요청</div>
-                                <div class="notice-meta">2026.02.23 · 비용팀</div>
+                        ${pendingApprovals.slice(0, 3).map(function(ap) {
+                            return '<div class="notice-item pending"><span class="notice-badge">대기</span>' +
+                                '<div class="notice-body"><div class="notice-title">' + ap.title + '</div>' +
+                                '<div class="notice-meta">' + ap.requestDate + ' · ' + ap.requestor + ' · ' + Store.formatCurrency(ap.amount) + '</div></div></div>';
+                        }).join('')}
+                        ${pendingApprovals.length === 0 ? '<div class="notice-item info"><span class="notice-badge info">정상</span><div class="notice-body"><div class="notice-title">대기 중인 결재가 없습니다</div></div></div>' : ''}
+                        <div style="border-top:1px dashed var(--border-color);margin-top:8px;padding-top:8px">
+                            <div class="notice-item info">
+                                <span class="notice-badge info">현장</span>
+                                <div class="notice-body">
+                                    <div class="notice-title">진행중인 현장 ${siteStats.active}개 / 전체 ${siteStats.total}개</div>
+                                    <div class="notice-meta">현장 관리에서 상세 확인</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="notice-item info">
-                            <span class="notice-badge info">공지</span>
-                            <div class="notice-body">
-                                <div class="notice-title">3월 안전 점검 일정 안내</div>
-                                <div class="notice-meta">2026.02.20 · 안전팀</div>
-                            </div>
-                        </div>
-                        <div class="notice-item info">
-                            <span class="notice-badge info">공지</span>
-                            <div class="notice-body">
-                                <div class="notice-title">자재 단가표 2026년 1분기 업데이트</div>
-                                <div class="notice-meta">2026.02.18 · 자재팀</div>
-                            </div>
-                        </div>
-                        <div class="empty-notice-hint">전자결재 기능 출시 예정 🚀</div>
                     </div>
                 </div>
 

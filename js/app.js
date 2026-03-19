@@ -10,7 +10,11 @@ var App = {
         dashboard: { title: '대시보드', icon: '📊', module: function () { return Dashboard; } },
         costs: { title: '비용 관리', icon: '💰', module: function () { return Costs; } },
         personnel: { title: '인원 관리', icon: '👷', module: function () { return Personnel; } },
-        materials: { title: '자재 관리', icon: '📦', module: function () { return Materials; } }
+        materials: { title: '자재 관리', icon: '📦', module: function () { return Materials; } },
+        sites: { title: '현장 관리', icon: '🏗️', module: function () { return Sites; } },
+        dailylog: { title: '현장 일지', icon: '📋', module: function () { return DailyLog; } },
+        reports: { title: '보고서', icon: '📈', module: function () { return Reports; } },
+        approvals: { title: '전자결재', icon: '✅', module: function () { return Approvals; } }
     },
 
     init: function () {
@@ -31,6 +35,17 @@ var App = {
 
         var overlay = document.getElementById('sidebarOverlay');
         if (overlay) overlay.addEventListener('click', function () { self.closeMobileMenu(); });
+
+        // Initialize site selector
+        Sites.updateSiteSelector();
+        var siteSel = document.getElementById('siteSelector');
+        if (siteSel) {
+            siteSel.addEventListener('change', function () {
+                Store.setCurrentSiteId(this.value);
+                var siteName = this.value === 'all' ? '전체 현장' : (this.options[this.selectedIndex] ? this.options[this.selectedIndex].text : '');
+                App.showToast(siteName + ' 선택됨', 'info');
+            });
+        }
     },
 
     handleRoute: function () {
@@ -100,6 +115,25 @@ var App = {
         var sidebar = document.getElementById('sidebar');
         var overlay = document.getElementById('sidebarOverlay');
         if (sidebar) sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+    },
+
+    // === Mobile More Drawer ===
+    toggleMobileMore: function () {
+        var drawer = document.getElementById('mobileMoreDrawer');
+        var overlay = document.getElementById('mobileMoreOverlay');
+        if (!drawer) return;
+        var isOpen = drawer.classList.contains('open');
+        if (isOpen) { this.closeMobileMore(); } else {
+            drawer.classList.add('open');
+            if (overlay) overlay.classList.add('active');
+        }
+    },
+
+    closeMobileMore: function () {
+        var drawer = document.getElementById('mobileMoreDrawer');
+        var overlay = document.getElementById('mobileMoreOverlay');
+        if (drawer) drawer.classList.remove('open');
         if (overlay) overlay.classList.remove('active');
     },
 

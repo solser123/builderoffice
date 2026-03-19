@@ -22,28 +22,81 @@
 
   <div class="app-container">
 
-    <!-- Top Global Navigation Bar (Ecount Style Menu integration) -->
+    <!-- Top Global Navigation Bar -->
     <header class="top-gnb">
       <div class="gnb-left">
         <a href="#dashboard" class="logo nav-item" data-page="dashboard">
           <span class="logo-icon">🏗️</span>
           <span class="logo-text">BuilderOffice V-ERP</span>
         </a>
+        <!-- 현장 선택기 -->
+        <div class="site-selector-wrap">
+          <select id="siteSelector" class="site-selector">
+            <option value="all">📍 전체 현장</option>
+          </select>
+        </div>
         <nav class="gnb-menu">
+          <a href="#dashboard" class="nav-item" data-page="dashboard">대시보드</a>
+          <a href="#dailylog" class="nav-item" data-page="dailylog">현장 일지</a>
           <a href="#costs" class="nav-item" data-page="costs">비용 관리</a>
           <a href="#personnel" class="nav-item" data-page="personnel">인원 관리</a>
           <a href="#materials" class="nav-item" data-page="materials">자재 관리</a>
+          <div class="gnb-more-wrap">
+            <button class="gnb-more-btn nav-item">더보기 ▾</button>
+            <div class="gnb-dropdown">
+              <a href="#sites" class="gnb-dropdown-item" data-page="sites">🏗️ 현장 관리</a>
+              <a href="#reports" class="gnb-dropdown-item" data-page="reports">📈 보고서</a>
+              <a href="#approvals" class="gnb-dropdown-item" data-page="approvals">✅ 전자결재</a>
+            </div>
+          </div>
         </nav>
       </div>
       <div class="gnb-right">
-        <div class="header-search">
+        <div class="header-search gnb-search-hide">
           <span class="search-icon">🔍</span>
           <input type="text" placeholder="통합 검색..." id="globalSearch">
         </div>
-        <button class="icon-btn" title="알림">🔔</button>
+        <button class="icon-btn" title="알림" onclick="App.navigate('approvals')" id="notifBtn">🔔</button>
         <button class="icon-btn" title="내 정보/설정">👤</button>
       </div>
     </header>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav">
+      <a href="#dashboard" class="mbn-item nav-item" data-page="dashboard">
+        <span class="mbn-icon">🏠</span><span class="mbn-label">홈</span>
+      </a>
+      <a href="#dailylog" class="mbn-item nav-item" data-page="dailylog">
+        <span class="mbn-icon">📋</span><span class="mbn-label">현장일지</span>
+      </a>
+      <a href="#personnel" class="mbn-item nav-item" data-page="personnel">
+        <span class="mbn-icon">👷</span><span class="mbn-label">인원</span>
+      </a>
+      <a href="#materials" class="mbn-item nav-item" data-page="materials">
+        <span class="mbn-icon">📦</span><span class="mbn-label">자재</span>
+      </a>
+      <button class="mbn-item mbn-more-btn" onclick="App.toggleMobileMore()">
+        <span class="mbn-icon">☰</span><span class="mbn-label">더보기</span>
+      </button>
+    </nav>
+
+    <!-- Mobile More Drawer -->
+    <div class="mobile-more-overlay" id="mobileMoreOverlay" onclick="App.closeMobileMore()"></div>
+    <div class="mobile-more-drawer" id="mobileMoreDrawer">
+      <div class="mmd-title">메뉴</div>
+      <a href="#costs" class="mmd-item nav-item" data-page="costs" onclick="App.closeMobileMore()">
+        <span>💰</span><span>비용 관리</span>
+      </a>
+      <a href="#sites" class="mmd-item nav-item" data-page="sites" onclick="App.closeMobileMore()">
+        <span>🏗️</span><span>현장 관리</span>
+      </a>
+      <a href="#reports" class="mmd-item nav-item" data-page="reports" onclick="App.closeMobileMore()">
+        <span>📈</span><span>보고서</span>
+      </a>
+      <a href="#approvals" class="mmd-item nav-item" data-page="approvals" onclick="App.closeMobileMore()">
+        <span>✅</span><span>전자결재</span>
+      </a>
+    </div>
 
     <!-- Main Content Area -->
     <main class="main-content">
@@ -68,6 +121,10 @@
   <script src="js/costs.js"></script>
   <script src="js/personnel.js"></script>
   <script src="js/materials.js"></script>
+  <script src="js/sites.js"></script>
+  <script src="js/dailylog.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/approvals.js"></script>
   <script src="js/app.js"></script>
 </body>
 
