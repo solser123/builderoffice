@@ -14,7 +14,10 @@ var App = {
         sites: { title: '현장 관리', icon: '🏗️', module: function () { return Sites; } },
         dailylog: { title: '현장 일지', icon: '📋', module: function () { return DailyLog; } },
         reports: { title: '보고서', icon: '📈', module: function () { return Reports; } },
-        approvals: { title: '전자결재', icon: '✅', module: function () { return Approvals; } }
+        approvals: { title: '전자결재', icon: '✅', module: function () { return Approvals; } },
+        safety: { title: '안전 관리', icon: '🦺', module: function () { return Safety; } },
+        quality: { title: '품질 관리', icon: '🔍', module: function () { return Quality; } },
+        contracts: { title: '계약/기성', icon: '📄', module: function () { return Contracts; } }
     },
 
     init: function () {

@@ -37,16 +37,38 @@
         </div>
         <nav class="gnb-menu">
           <a href="#dashboard" class="nav-item" data-page="dashboard">대시보드</a>
-          <a href="#dailylog" class="nav-item" data-page="dailylog">현장 일지</a>
-          <a href="#costs" class="nav-item" data-page="costs">비용 관리</a>
-          <a href="#personnel" class="nav-item" data-page="personnel">인원 관리</a>
-          <a href="#materials" class="nav-item" data-page="materials">자재 관리</a>
+          <!-- 공무 (Admin) -->
           <div class="gnb-more-wrap">
-            <button class="gnb-more-btn nav-item">더보기 ▾</button>
+            <button class="gnb-more-btn nav-item">공무 ▾</button>
             <div class="gnb-dropdown">
               <a href="#sites" class="gnb-dropdown-item" data-page="sites">🏗️ 현장 관리</a>
-              <a href="#reports" class="gnb-dropdown-item" data-page="reports">📈 보고서</a>
+              <a href="#dailylog" class="gnb-dropdown-item" data-page="dailylog">📋 현장 일지</a>
+              <a href="#contracts" class="gnb-dropdown-item" data-page="contracts">📄 계약/기성</a>
               <a href="#approvals" class="gnb-dropdown-item" data-page="approvals">✅ 전자결재</a>
+            </div>
+          </div>
+          <!-- 안전/품질 (Safety/Quality) -->
+          <div class="gnb-more-wrap">
+            <button class="gnb-more-btn nav-item">안전/품질 ▾</button>
+            <div class="gnb-dropdown">
+              <a href="#safety" class="gnb-dropdown-item" data-page="safety">🦺 안전점검/TBM</a>
+              <a href="#quality" class="gnb-dropdown-item" data-page="quality">🔍 품질검사</a>
+            </div>
+          </div>
+          <!-- 노무/자재 (Labor/Materials) -->
+          <div class="gnb-more-wrap">
+            <button class="gnb-more-btn nav-item">노무/자재 ▾</button>
+            <div class="gnb-dropdown">
+              <a href="#personnel" class="gnb-dropdown-item" data-page="personnel">👷 인원 관리</a>
+              <a href="#materials" class="gnb-dropdown-item" data-page="materials">📦 자재 관리</a>
+            </div>
+          </div>
+          <!-- 경리 (Accounting) -->
+          <div class="gnb-more-wrap">
+            <button class="gnb-more-btn nav-item">경리 ▾</button>
+            <div class="gnb-dropdown">
+              <a href="#costs" class="gnb-dropdown-item" data-page="costs">💰 비용 관리</a>
+              <a href="#reports" class="gnb-dropdown-item" data-page="reports">📈 보고서</a>
             </div>
           </div>
         </nav>
@@ -72,8 +94,8 @@
       <a href="#personnel" class="mbn-item nav-item" data-page="personnel">
         <span class="mbn-icon">👷</span><span class="mbn-label">인원</span>
       </a>
-      <a href="#materials" class="mbn-item nav-item" data-page="materials">
-        <span class="mbn-icon">📦</span><span class="mbn-label">자재</span>
+      <a href="#safety" class="mbn-item nav-item" data-page="safety">
+        <span class="mbn-icon">🦺</span><span class="mbn-label">안전</span>
       </a>
       <button class="mbn-item mbn-more-btn" onclick="App.toggleMobileMore()">
         <span class="mbn-icon">☰</span><span class="mbn-label">더보기</span>
@@ -84,17 +106,39 @@
     <div class="mobile-more-overlay" id="mobileMoreOverlay" onclick="App.closeMobileMore()"></div>
     <div class="mobile-more-drawer" id="mobileMoreDrawer">
       <div class="mmd-title">메뉴</div>
-      <a href="#costs" class="mmd-item nav-item" data-page="costs" onclick="App.closeMobileMore()">
-        <span>💰</span><span>비용 관리</span>
-      </a>
+      <div class="mmd-section-title">공무</div>
       <a href="#sites" class="mmd-item nav-item" data-page="sites" onclick="App.closeMobileMore()">
         <span>🏗️</span><span>현장 관리</span>
       </a>
-      <a href="#reports" class="mmd-item nav-item" data-page="reports" onclick="App.closeMobileMore()">
-        <span>📈</span><span>보고서</span>
+      <a href="#dailylog" class="mmd-item nav-item" data-page="dailylog" onclick="App.closeMobileMore()">
+        <span>📋</span><span>현장 일지</span>
+      </a>
+      <a href="#contracts" class="mmd-item nav-item" data-page="contracts" onclick="App.closeMobileMore()">
+        <span>📄</span><span>계약/기성</span>
       </a>
       <a href="#approvals" class="mmd-item nav-item" data-page="approvals" onclick="App.closeMobileMore()">
         <span>✅</span><span>전자결재</span>
+      </a>
+      <div class="mmd-section-title">안전/품질</div>
+      <a href="#safety" class="mmd-item nav-item" data-page="safety" onclick="App.closeMobileMore()">
+        <span>🦺</span><span>안전점검/TBM</span>
+      </a>
+      <a href="#quality" class="mmd-item nav-item" data-page="quality" onclick="App.closeMobileMore()">
+        <span>🔍</span><span>품질검사</span>
+      </a>
+      <div class="mmd-section-title">노무/자재</div>
+      <a href="#personnel" class="mmd-item nav-item" data-page="personnel" onclick="App.closeMobileMore()">
+        <span>👷</span><span>인원 관리</span>
+      </a>
+      <a href="#materials" class="mmd-item nav-item" data-page="materials" onclick="App.closeMobileMore()">
+        <span>📦</span><span>자재 관리</span>
+      </a>
+      <div class="mmd-section-title">경리</div>
+      <a href="#costs" class="mmd-item nav-item" data-page="costs" onclick="App.closeMobileMore()">
+        <span>💰</span><span>비용 관리</span>
+      </a>
+      <a href="#reports" class="mmd-item nav-item" data-page="reports" onclick="App.closeMobileMore()">
+        <span>📈</span><span>보고서</span>
       </a>
     </div>
 
@@ -125,6 +169,9 @@
   <script src="js/dailylog.js"></script>
   <script src="js/reports.js"></script>
   <script src="js/approvals.js"></script>
+  <script src="js/safety.js"></script>
+  <script src="js/quality.js"></script>
+  <script src="js/contracts.js"></script>
   <script src="js/app.js"></script>
 </body>
 

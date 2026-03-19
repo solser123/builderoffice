@@ -15,6 +15,12 @@ const Store = {
         CURRENT_SITE: 'builderoffice_current_site',
         DAILY_LOGS: 'builderoffice_daily_logs',
         APPROVALS: 'builderoffice_approvals',
+        SAFETY_CHECKS: 'builderoffice_safety_checks',
+        SAFETY_EDUCATION: 'builderoffice_safety_education',
+        RISK_ASSESSMENTS: 'builderoffice_risk_assessments',
+        QUALITY_CHECKS: 'builderoffice_quality_checks',
+        CONTRACTS: 'builderoffice_contracts',
+        BILLINGS: 'builderoffice_billings',
     },
 
     // === Generic CRUD ===
@@ -470,6 +476,62 @@ const Store = {
     APPROVAL_TYPES: ['비용결재', '자재요청', '인원요청', '공사계획', '기타'],
     APPROVAL_STATUSES: ['대기중', '승인', '반려'],
 
+    // === Safety Checks ===
+    getSafetyChecks() { return this._get(this.KEYS.SAFETY_CHECKS); },
+    addSafetyCheck(d) { var a = this.getSafetyChecks(); d.id = this._generateId(); d.createdAt = new Date().toISOString(); a.unshift(d); this._set(this.KEYS.SAFETY_CHECKS, a); return d; },
+    updateSafetyCheck(id, u) { var a = this.getSafetyChecks(); var i = a.findIndex(function(x){return x.id===id;}); if(i!==-1){Object.assign(a[i],u);this._set(this.KEYS.SAFETY_CHECKS,a);return a[i];}return null; },
+    deleteSafetyCheck(id) { this._set(this.KEYS.SAFETY_CHECKS, this.getSafetyChecks().filter(function(x){return x.id!==id;})); },
+
+    // === Safety Education ===
+    getSafetyEducation() { return this._get(this.KEYS.SAFETY_EDUCATION); },
+    addSafetyEducation(d) { var a = this.getSafetyEducation(); d.id = this._generateId(); d.createdAt = new Date().toISOString(); a.unshift(d); this._set(this.KEYS.SAFETY_EDUCATION, a); return d; },
+    updateSafetyEducation(id, u) { var a = this.getSafetyEducation(); var i = a.findIndex(function(x){return x.id===id;}); if(i!==-1){Object.assign(a[i],u);this._set(this.KEYS.SAFETY_EDUCATION,a);return a[i];}return null; },
+    deleteSafetyEducation(id) { this._set(this.KEYS.SAFETY_EDUCATION, this.getSafetyEducation().filter(function(x){return x.id!==id;})); },
+
+    // === Risk Assessments ===
+    getRiskAssessments() { return this._get(this.KEYS.RISK_ASSESSMENTS); },
+    addRiskAssessment(d) { var a = this.getRiskAssessments(); d.id = this._generateId(); d.createdAt = new Date().toISOString(); a.unshift(d); this._set(this.KEYS.RISK_ASSESSMENTS, a); return d; },
+    updateRiskAssessment(id, u) { var a = this.getRiskAssessments(); var i = a.findIndex(function(x){return x.id===id;}); if(i!==-1){Object.assign(a[i],u);this._set(this.KEYS.RISK_ASSESSMENTS,a);return a[i];}return null; },
+    deleteRiskAssessment(id) { this._set(this.KEYS.RISK_ASSESSMENTS, this.getRiskAssessments().filter(function(x){return x.id!==id;})); },
+
+    // === Quality Checks ===
+    getQualityChecks() { return this._get(this.KEYS.QUALITY_CHECKS); },
+    addQualityCheck(d) { var a = this.getQualityChecks(); d.id = this._generateId(); d.createdAt = new Date().toISOString(); a.unshift(d); this._set(this.KEYS.QUALITY_CHECKS, a); return d; },
+    updateQualityCheck(id, u) { var a = this.getQualityChecks(); var i = a.findIndex(function(x){return x.id===id;}); if(i!==-1){Object.assign(a[i],u);this._set(this.KEYS.QUALITY_CHECKS,a);return a[i];}return null; },
+    deleteQualityCheck(id) { this._set(this.KEYS.QUALITY_CHECKS, this.getQualityChecks().filter(function(x){return x.id!==id;})); },
+
+    // === Contracts ===
+    getContracts() { return this._get(this.KEYS.CONTRACTS); },
+    addContract(d) { var a = this.getContracts(); d.id = this._generateId(); d.createdAt = new Date().toISOString(); a.unshift(d); this._set(this.KEYS.CONTRACTS, a); return d; },
+    updateContract(id, u) { var a = this.getContracts(); var i = a.findIndex(function(x){return x.id===id;}); if(i!==-1){Object.assign(a[i],u);this._set(this.KEYS.CONTRACTS,a);return a[i];}return null; },
+    deleteContract(id) { this._set(this.KEYS.CONTRACTS, this.getContracts().filter(function(x){return x.id!==id;})); },
+
+    // === Billings (기성) ===
+    getBillings() { return this._get(this.KEYS.BILLINGS); },
+    addBilling(d) { var a = this.getBillings(); d.id = this._generateId(); d.createdAt = new Date().toISOString(); a.unshift(d); this._set(this.KEYS.BILLINGS, a); return d; },
+    updateBilling(id, u) { var a = this.getBillings(); var i = a.findIndex(function(x){return x.id===id;}); if(i!==-1){Object.assign(a[i],u);this._set(this.KEYS.BILLINGS,a);return a[i];}return null; },
+    deleteBilling(id) { this._set(this.KEYS.BILLINGS, this.getBillings().filter(function(x){return x.id!==id;})); },
+
+    // === New Category Arrays ===
+    SAFETY_CHECK_TYPES: ['TBM', '일일점검', '수시점검', '특별점검'],
+    SAFETY_EDU_TYPES: ['신규채용시', '정기교육', '특별교육', '변경시교육'],
+    QUALITY_CHECK_TYPES: ['자재검수', '시공검사', '완료검사', '중간검사'],
+    QUALITY_RESULTS: ['합격', '불합격', '조건부합격'],
+    CONTRACT_TYPES: ['하도급', '자재납품', '장비임대', '용역'],
+    CONTRACT_STATUSES: ['계약중', '완료', '해지'],
+    BILLING_STATUSES: ['작성중', '청구중', '승인', '지급완료'],
+    SAFETY_CHECKLIST: [
+        '안전모 착용 상태', '안전화 착용 상태', '안전벨트 착용(고소작업)',
+        '작업발판 설치 상태', '개구부 방호조치', '안전난간 설치 상태',
+        '가설전기 안전상태', '소화기 비치 상태', '위험표지판 부착',
+        '작업장 정리정돈', '장비/공구 점검 상태', '가설구조물 안전상태'
+    ],
+    TBM_CHECKLIST: [
+        '금일 작업내용 및 위험요인 공유', '안전보호구 착용 상태 확인',
+        '안전작업 절차 교육', '비상시 대피경로 확인',
+        '전일 안전사항 전달', '특이사항 공유'
+    ],
+
     COST_CATEGORIES: ['인건비', '자재비', '장비비', '외주비', '운송비', '기타'],
     JOB_TYPES: ['철근공', '형틀공', '콘크리트공', '미장공', '방수공', '도장공', '전기공', '배관공', '용접공', '장비기사', '일반작업자', '관리자'],
     MATERIAL_CATEGORIES: ['철근', '시멘트/콘크리트', '목재', '골재', '전기자재', '배관자재', '방수자재', '도장자재', '철물', '기타'],
@@ -566,6 +628,67 @@ const Store = {
                 this.addApproval({ type: '비용결재', title: '3층 레미콘 타설 외주비', amount: 5800000, description: '25-21-15 레미콘 60m3 타설 외주 비용', requestor: '김현장', requestDate: today, siteId: sampleSites[0].id, siteName: sampleSites[0].name, status: '대기중', approvedBy: '', approvalDate: '', rejectReason: '' });
                 this.addApproval({ type: '자재요청', title: '철근 D16 20톤 추가 발주', amount: 8200000, description: '4층 슬라브 철근 공사를 위한 SD400 D16 추가 발주', requestor: '김현장', requestDate: yesterday, siteId: sampleSites[0].id, siteName: sampleSites[0].name, status: '승인', approvedBy: '본사 이사', approvalDate: today, rejectReason: '' });
                 this.addApproval({ type: '인원요청', title: '도장공 3명 추가 투입 요청', amount: 660000, description: '공기 단축을 위한 도장공 3명 3일간 추가 투입', requestor: '이소장', requestDate: twoDaysAgo, siteId: sampleSites[1] ? sampleSites[1].id : sampleSites[0].id, siteName: sampleSites[1] ? sampleSites[1].name : sampleSites[0].name, status: '반려', approvedBy: '본사 이사', approvalDate: yesterday, rejectReason: '예산 초과. 기존 인원으로 진행 요망.' });
+            }
+        }
+
+        // Sample safety checks
+        if (this.getSafetyChecks().length === 0) {
+            var ss = this.getSites();
+            if (ss.length > 0) {
+                this.addSafetyCheck({ date: today, siteId: ss[0].id, siteName: ss[0].name, type: 'TBM', inspector: '김현장', weather: '맑음', temperature: '14', participants: 12, checkItems: this.TBM_CHECKLIST.map(function(item){ return {item:item,checked:true}; }), issues: '없음', actions: '', result: '적합' });
+                this.addSafetyCheck({ date: today, siteId: ss[0].id, siteName: ss[0].name, type: '일일점검', inspector: '안전관리자', weather: '맑음', temperature: '14', participants: 0, checkItems: this.SAFETY_CHECKLIST.map(function(item,i){ return {item:item,checked:i!==4}; }), issues: '3층 개구부 안전덮개 일부 미설치', actions: '즉시 안전덮개 추가 설치 완료', result: '조건부적합' });
+                this.addSafetyCheck({ date: yesterday, siteId: ss[0].id, siteName: ss[0].name, type: 'TBM', inspector: '김현장', weather: '구름조금', temperature: '12', participants: 10, checkItems: this.TBM_CHECKLIST.map(function(item){ return {item:item,checked:true}; }), issues: '없음', actions: '', result: '적합' });
+            }
+        }
+
+        // Sample safety education
+        if (this.getSafetyEducation().length === 0) {
+            var ss2 = this.getSites();
+            if (ss2.length > 0) {
+                this.addSafetyEducation({ date: today, siteId: ss2[0].id, siteName: ss2[0].name, type: '정기교육', title: '3월 정기 안전교육', content: '고소작업 안전수칙, 추락재해 예방, 안전대 사용법', instructor: '안전관리자', duration: 2, participants: 12, participantNames: '김철수, 이영희, 박민수, 최동현, 정수진, 한우성, 강지훈 외 5명' });
+                this.addSafetyEducation({ date: yesterday, siteId: ss2[0].id, siteName: ss2[0].name, type: '신규채용시', title: '신규 근로자 채용 시 교육', content: '현장 안전수칙, 비상대피로, 보호구 착용법, 위험물 취급', instructor: '김현장', duration: 1, participants: 3, participantNames: '신입1, 신입2, 신입3' });
+            }
+        }
+
+        // Sample risk assessments
+        if (this.getRiskAssessments().length === 0) {
+            var ss3 = this.getSites();
+            if (ss3.length > 0) {
+                this.addRiskAssessment({ date: today, siteId: ss3[0].id, siteName: ss3[0].name, workType: '거푸집 설치 작업', hazard: '고소작업 중 추락', frequency: 4, severity: 5, riskScore: 20, riskLevel: '상', currentMeasures: '안전대 착용, 안전난간 설치', additionalMeasures: '작업발판 추가 설치, 안전네트 설치', responsible: '안전관리자', status: '진행중' });
+                this.addRiskAssessment({ date: today, siteId: ss3[0].id, siteName: ss3[0].name, workType: '철근 가공 작업', hazard: '철근 절단 시 비산물에 의한 부상', frequency: 3, severity: 3, riskScore: 9, riskLevel: '중', currentMeasures: '보안경 착용, 방호커버 설치', additionalMeasures: '작업반경 내 출입통제', responsible: '공사팀장', status: '완료' });
+                this.addRiskAssessment({ date: yesterday, siteId: ss3[0].id, siteName: ss3[0].name, workType: '콘크리트 타설', hazard: '레미콘 차량 이동 시 협착', frequency: 3, severity: 4, riskScore: 12, riskLevel: '중', currentMeasures: '유도원 배치, 경보장치 사용', additionalMeasures: '차량 통행로 별도 확보', responsible: '공사팀장', status: '진행중' });
+            }
+        }
+
+        // Sample quality checks
+        if (this.getQualityChecks().length === 0) {
+            var ss4 = this.getSites();
+            if (ss4.length > 0) {
+                this.addQualityCheck({ date: today, siteId: ss4[0].id, siteName: ss4[0].name, type: '자재검수', title: '철근 D16 입고 검수', location: '자재 야적장', standard: 'KS D 3504 SD400 / D16', result: '합격', inspector: '품질관리자', findings: '인장강도, 항복강도 시험성적서 확인 완료. Mill Sheet 적합.', actions: '' });
+                this.addQualityCheck({ date: yesterday, siteId: ss4[0].id, siteName: ss4[0].name, type: '시공검사', title: '3층 슬라브 철근 배근검사', location: '3층 슬라브', standard: '구조도면 S-301, 배근간격 @200', result: '합격', inspector: '감리단', findings: '배근간격, 피복두께, 정착길이 적합', actions: '' });
+                this.addQualityCheck({ date: twoDaysAgo, siteId: ss4[0].id, siteName: ss4[0].name, type: '시공검사', title: '2층 방수공사 검사', location: '2층 화장실', standard: '우레탄 도막방수 1.5mm 이상', result: '조건부합격', inspector: '품질관리자', findings: '일부 구간 도막 두께 1.3mm 미달', actions: '미달 구간 추가 도포 후 재검사' });
+            }
+        }
+
+        // Sample contracts
+        if (this.getContracts().length === 0) {
+            var ss5 = this.getSites();
+            if (ss5.length > 0) {
+                this.addContract({ siteId: ss5[0].id, siteName: ss5[0].name, contractor: '(주)대한철근', contractType: '하도급', workScope: '골조공사 - 철근 가공 및 조립', contractAmount: 180000000, startDate: '2025-06-15', endDate: '2026-08-31', contactPerson: '최사장', contactPhone: '010-1111-2222', status: '계약중' });
+                this.addContract({ siteId: ss5[0].id, siteName: ss5[0].name, contractor: '(주)한국형틀', contractType: '하도급', workScope: '골조공사 - 거푸집 제작 및 설치', contractAmount: 150000000, startDate: '2025-06-15', endDate: '2026-08-31', contactPerson: '이대표', contactPhone: '010-3333-4444', status: '계약중' });
+                this.addContract({ siteId: ss5[0].id, siteName: ss5[0].name, contractor: '(주)한일전기', contractType: '하도급', workScope: '전기공사 일체', contractAmount: 120000000, startDate: '2025-09-01', endDate: '2027-01-31', contactPerson: '정사장', contactPhone: '010-5555-6666', status: '계약중' });
+                this.addContract({ siteId: ss5[0].id, siteName: ss5[0].name, contractor: '동양레미콘', contractType: '자재납품', workScope: '레미콘 25-21-15 납품', contractAmount: 95000000, startDate: '2025-06-01', endDate: '2026-12-31', contactPerson: '박부장', contactPhone: '010-7777-8888', status: '계약중' });
+            }
+        }
+
+        // Sample billings (기성)
+        if (this.getBillings().length === 0) {
+            var contracts = this.getContracts();
+            var ss6 = this.getSites();
+            if (contracts.length > 0 && ss6.length > 0) {
+                this.addBilling({ siteId: ss6[0].id, siteName: ss6[0].name, contractId: contracts[0].id, contractorName: contracts[0].contractor, period: '2026-01', plannedAmount: 30000000, executedAmount: 28500000, billingRate: 95, cumulativeAmount: 85000000, status: '지급완료', note: '' });
+                this.addBilling({ siteId: ss6[0].id, siteName: ss6[0].name, contractId: contracts[0].id, contractorName: contracts[0].contractor, period: '2026-02', plannedAmount: 35000000, executedAmount: 33000000, billingRate: 94, cumulativeAmount: 118000000, status: '승인', note: '' });
+                this.addBilling({ siteId: ss6[0].id, siteName: ss6[0].name, contractId: contracts[0].id, contractorName: contracts[0].contractor, period: '2026-03', plannedAmount: 32000000, executedAmount: 0, billingRate: 0, cumulativeAmount: 118000000, status: '작성중', note: '월말 기성 청구 예정' });
             }
         }
     }
