@@ -11,11 +11,12 @@ var Costs = {
         var costs = this._getFilteredCosts();
         var stats = Store.getCostStats();
         var total = costs.reduce(function (sum, c) { return sum + Number(c.amount); }, 0);
+        var esc = Store.escapeHtml;
 
         var catOptions = '';
         for (var i = 0; i < Store.COST_CATEGORIES.length; i++) {
             var sel = this.currentFilter === Store.COST_CATEGORIES[i] ? ' selected' : '';
-            catOptions += '<option value="' + Store.COST_CATEGORIES[i] + '"' + sel + '>' + Store.COST_CATEGORIES[i] + '</option>';
+            catOptions += '<option value="' + esc(Store.COST_CATEGORIES[i]) + '"' + sel + '>' + esc(Store.COST_CATEGORIES[i]) + '</option>';
         }
 
         var rows = '';
@@ -23,11 +24,11 @@ var Costs = {
             for (var j = 0; j < costs.length; j++) {
                 var c = costs[j];
                 rows += '<tr>' +
-                    '<td>' + c.date + '</td>' +
-                    '<td><span class="badge badge-blue">' + c.category + '</span></td>' +
-                    '<td style="color: var(--text-primary); font-weight: 500;">' + c.name + '</td>' +
+                    '<td>' + esc(c.date) + '</td>' +
+                    '<td><span class="badge badge-blue">' + esc(c.category) + '</span></td>' +
+                    '<td style="color: var(--text-primary); font-weight: 500;">' + esc(c.name) + '</td>' +
                     '<td class="amount">' + Store.formatCurrency(c.amount) + '</td>' +
-                    '<td>' + (c.memo || '-') + '</td>' +
+                    '<td>' + esc(c.memo || '-') + '</td>' +
                     '<td><div class="action-btns">' +
                     '<button class="action-btn edit" onclick="Costs.showEditModal(\'' + c.id + '\')" title="수정">✏️</button>' +
                     '<button class="action-btn delete" onclick="Costs.confirmDelete(\'' + c.id + '\')" title="삭제">🗑️</button>' +
@@ -82,9 +83,10 @@ var Costs = {
     },
 
     showAddModal: function () {
+        var esc = Store.escapeHtml;
         var catOptions = '';
         for (var i = 0; i < Store.COST_CATEGORIES.length; i++) {
-            catOptions += '<option value="' + Store.COST_CATEGORIES[i] + '">' + Store.COST_CATEGORIES[i] + '</option>';
+            catOptions += '<option value="' + esc(Store.COST_CATEGORIES[i]) + '">' + esc(Store.COST_CATEGORIES[i]) + '</option>';
         }
 
         var html = '<div class="modal-header"><h3>💰 비용 추가</h3><button class="modal-close" onclick="App.closeModal()">&times;</button></div>' +
@@ -104,22 +106,23 @@ var Costs = {
     showEditModal: function (id) {
         var cost = Store.getCosts().find(function (c) { return c.id === id; });
         if (!cost) return;
+        var esc = Store.escapeHtml;
 
         var catOptions = '';
         for (var i = 0; i < Store.COST_CATEGORIES.length; i++) {
             var sel = Store.COST_CATEGORIES[i] === cost.category ? ' selected' : '';
-            catOptions += '<option value="' + Store.COST_CATEGORIES[i] + '"' + sel + '>' + Store.COST_CATEGORIES[i] + '</option>';
+            catOptions += '<option value="' + esc(Store.COST_CATEGORIES[i]) + '"' + sel + '>' + esc(Store.COST_CATEGORIES[i]) + '</option>';
         }
 
         var html = '<div class="modal-header"><h3>✏️ 비용 수정</h3><button class="modal-close" onclick="App.closeModal()">&times;</button></div>' +
             '<div class="modal-body">' +
             '<div class="form-row">' +
-            '<div class="form-group"><label>날짜</label><input type="date" class="form-control" id="costDate" value="' + cost.date + '"></div>' +
+            '<div class="form-group"><label>날짜</label><input type="date" class="form-control" id="costDate" value="' + esc(cost.date) + '"></div>' +
             '<div class="form-group"><label>카테고리</label><select class="form-control" id="costCategory">' + catOptions + '</select></div>' +
             '</div>' +
-            '<div class="form-group"><label>항목명</label><input type="text" class="form-control" id="costName" value="' + cost.name + '"></div>' +
+            '<div class="form-group"><label>항목명</label><input type="text" class="form-control" id="costName" value="' + esc(cost.name) + '"></div>' +
             '<div class="form-group"><label>금액 (원)</label><input type="number" class="form-control" id="costAmount" value="' + cost.amount + '"></div>' +
-            '<div class="form-group"><label>메모</label><input type="text" class="form-control" id="costMemo" value="' + (cost.memo || '') + '"></div>' +
+            '<div class="form-group"><label>메모</label><input type="text" class="form-control" id="costMemo" value="' + esc(cost.memo || '') + '"></div>' +
             '</div>' +
             '<div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal()">취소</button><button class="btn btn-primary" onclick="Costs.updateCost(\'' + id + '\')">수정</button></div>';
         App.showModal(html);

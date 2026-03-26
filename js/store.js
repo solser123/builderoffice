@@ -11,6 +11,11 @@ const Store = {
         ATTENDANCE: 'builderoffice_attendance',
         MATERIALS: 'builderoffice_materials',
         MATERIAL_LOGS: 'builderoffice_material_logs',
+        SITES: 'builderoffice_sites',
+        WORK_INPUTS: 'builderoffice_work_inputs',
+        SAFETY_CHECKS: 'builderoffice_safety_checks',
+        DOCUMENTS: 'builderoffice_documents',
+        APPROVALS: 'builderoffice_approvals',
     },
 
     // === Generic CRUD ===
@@ -33,7 +38,7 @@ const Store = {
     },
 
     _generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+        return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
     },
 
     // === Cost Management ===
@@ -250,6 +255,13 @@ const Store = {
         return result;
     },
 
+    escapeHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    },
+
     formatNumber(num) {
         return new Intl.NumberFormat('ko-KR').format(num);
     },
@@ -377,6 +389,103 @@ const Store = {
         };
     },
 
+    // === Site Management ===
+    getSites() { return this._get(this.KEYS.SITES); },
+    addSite(site) {
+        var sites = this.getSites();
+        site.id = this._generateId();
+        site.createdAt = new Date().toISOString();
+        sites.unshift(site);
+        this._set(this.KEYS.SITES, sites);
+        return site;
+    },
+    updateSite(id, updates) {
+        var sites = this.getSites();
+        var idx = sites.findIndex(function (s) { return s.id === id; });
+        if (idx !== -1) { Object.assign(sites[idx], updates); this._set(this.KEYS.SITES, sites); return sites[idx]; }
+        return null;
+    },
+    deleteSite(id) {
+        var sites = this.getSites().filter(function (s) { return s.id !== id; });
+        this._set(this.KEYS.SITES, sites);
+    },
+
+    // === Work Input Management ===
+    getWorkInputs() { return this._get(this.KEYS.WORK_INPUTS); },
+    addWorkInput(input) {
+        var inputs = this.getWorkInputs();
+        input.id = this._generateId();
+        input.createdAt = new Date().toISOString();
+        input.status = input.status || '작성';
+        inputs.unshift(input);
+        this._set(this.KEYS.WORK_INPUTS, inputs);
+        return input;
+    },
+    updateWorkInput(id, updates) {
+        var inputs = this.getWorkInputs();
+        var idx = inputs.findIndex(function (w) { return w.id === id; });
+        if (idx !== -1) { Object.assign(inputs[idx], updates); this._set(this.KEYS.WORK_INPUTS, inputs); return inputs[idx]; }
+        return null;
+    },
+    deleteWorkInput(id) {
+        var inputs = this.getWorkInputs().filter(function (w) { return w.id !== id; });
+        this._set(this.KEYS.WORK_INPUTS, inputs);
+    },
+
+    // === Safety Check Management ===
+    getSafetyChecks() { return this._get(this.KEYS.SAFETY_CHECKS); },
+    addSafetyCheck(check) {
+        var checks = this.getSafetyChecks();
+        check.id = this._generateId();
+        check.createdAt = new Date().toISOString();
+        checks.unshift(check);
+        this._set(this.KEYS.SAFETY_CHECKS, checks);
+        return check;
+    },
+    updateSafetyCheck(id, updates) {
+        var checks = this.getSafetyChecks();
+        var idx = checks.findIndex(function (c) { return c.id === id; });
+        if (idx !== -1) { Object.assign(checks[idx], updates); this._set(this.KEYS.SAFETY_CHECKS, checks); return checks[idx]; }
+        return null;
+    },
+
+    // === Document Management ===
+    getDocuments() { return this._get(this.KEYS.DOCUMENTS); },
+    addDocument(doc) {
+        var docs = this.getDocuments();
+        doc.id = this._generateId();
+        doc.createdAt = new Date().toISOString();
+        docs.unshift(doc);
+        this._set(this.KEYS.DOCUMENTS, docs);
+        return doc;
+    },
+    deleteDocument(id) {
+        var docs = this.getDocuments().filter(function (d) { return d.id !== id; });
+        this._set(this.KEYS.DOCUMENTS, docs);
+    },
+
+    // === Approval Management ===
+    getApprovals() { return this._get(this.KEYS.APPROVALS); },
+    addApproval(approval) {
+        var approvals = this.getApprovals();
+        approval.id = this._generateId();
+        approval.createdAt = new Date().toISOString();
+        approval.status = approval.status || '대기';
+        approvals.unshift(approval);
+        this._set(this.KEYS.APPROVALS, approvals);
+        return approval;
+    },
+    updateApproval(id, updates) {
+        var approvals = this.getApprovals();
+        var idx = approvals.findIndex(function (a) { return a.id === id; });
+        if (idx !== -1) { Object.assign(approvals[idx], updates); this._set(this.KEYS.APPROVALS, approvals); return approvals[idx]; }
+        return null;
+    },
+
+    // === Safety Categories ===
+    SAFETY_TYPES: ['작업 전 점검', 'TBM/안전교육', '위험성평가', '작업허가서', '보호구 점검', '시정조치'],
+    DOCUMENT_TYPES: ['세금계산서', '거래명세서', '영수증', '계약서', '도면', '안전서류', '사진', '공문', '기타'],
+
     // === Categories ===
     COST_CATEGORIES: ['인건비', '자재비', '장비비', '외주비', '운송비', '기타'],
     JOB_TYPES: ['철근공', '형틀공', '콘크리트공', '미장공', '방수공', '도장공', '전기공', '배관공', '용접공', '장비기사', '일반작업자', '관리자'],
@@ -449,5 +558,31 @@ const Store = {
         this.addMaterialLog({ materialId: mats[0].id, materialName: mats[0].name, type: 'out', quantity: 5, date: today, note: 'B1 슬라브 사용' });
         this.addMaterialLog({ materialId: mats[3].id, materialName: mats[3].name, type: 'in', quantity: 200, date: twoDaysAgo, note: '구매 입고' });
         this.addMaterialLog({ materialId: mats[3].id, materialName: mats[3].name, type: 'out', quantity: 50, date: today, note: '2층 거푸집' });
+
+        // Sample sites
+        this.addSite({ name: '강남 오피스�� 신축공사', client: '(주)한국개발', manager: '김소장', address: '서울시 강남구 역삼동 123-45', startDate: '2026-01-15', endDate: '2027-06-30', contractAmount: 15000000000, status: '진행중', progress: 35, workerCount: 24, safetyGrade: 'A', memo: 'B2~15F 오피스텔' });
+        this.addSite({ name: '수원 물류센터 증축', client: '수원물류(주)', manager: '이소장', address: '경기도 수원시 권선구 456', startDate: '2026-03-01', endDate: '2026-12-31', contractAmount: 5200000000, status: '진행중', progress: 12, workerCount: 15, safetyGrade: 'B', memo: '물류동 2층 증축' });
+        this.addSite({ name: '인천 아파트 리모델링', client: '인천주택조합', manager: '박소장', address: '인천시 남동구 구월동 789', startDate: '2026-05-01', endDate: '2027-02-28', contractAmount: 8700000000, status: '준비중', progress: 0, workerCount: 0, safetyGrade: '-', memo: '설계 검토 중' });
+
+        // Sample safety checks
+        this.addSafetyCheck({ date: today, siteName: '강남 오피스텔 신축공사', type: '작업 전 점검', checklist: [{ item: '안전모 착용 확인', checked: true }, { item: '안전대 착용 확인', checked: true }, { item: '작업구역 정리정돈', checked: true }, { item: '추락방지망 설치 확인', checked: false }], inspector: '김소장', status: '완료', note: '추락방지망 B동 3층 미설치 → 오전 중 보완 조치' });
+        this.addSafetyCheck({ date: today, siteName: '강남 오피스텔 신축공사', type: 'TBM/안전교육', checklist: [{ item: '금일 작업 내용 공유', checked: true }, { item: '위험요인 교육', checked: true }, { item: '비상연락망 확인', checked: true }], inspector: '정안전', status: '완료', note: '참석 18명' });
+        this.addSafetyCheck({ date: yesterday, siteName: '수원 물류센터 증축', type: '위험성평가', checklist: [{ item: '고소작업 위험성 평가', checked: true }, { item: '중장비 작업 반경 확인', checked: true }, { item: '전기작업 안전조치', checked: false }], inspector: '이소장', status: '시정필요', note: '전기 임시배전반 접지 미확인' });
+
+        // Sample work inputs
+        this.addWorkInput({ date: today, siteName: '강남 오피스텔 신축공사', workers: [{ name: '��철수', jobType: '철근공', hours: 8, gongsu: 1 }, { name: '이영희', jobType: '형틀공', hours: 8, gongsu: 1 }, { name: '박민수', jobType: '콘크리트공', hours: 10, gongsu: 1.25 }], equipment: '레미콘 2대, 펌프카 1대', workContent: 'B1 슬라브 콘크리트 타설 (40m3)', expenses: [{ category: '식대', amount: 120000, memo: '중식 24명' }, { category: '유류비', amount: 85000, memo: '��프카 경유' }], safetyNote: 'TBM 완료, 작업 전 점검 완료', status: '제출완료' });
+        this.addWorkInput({ date: yesterday, siteName: '강남 오피스텔 신축공사', workers: [{ name: '김철수', jobType: '철근공', hours: 9, gongsu: 1.125 }, { name: '강지훈', jobType: '용접공', hours: 8, gongsu: 1 }], equipment: '크레인 1대', workContent: '2F 철근 배근 작업', expenses: [{ category: '식대', amount: 100000, memo: '중식 20명' }], safetyNote: 'TBM 완료', status: '승인완료' });
+
+        // Sample approvals
+        this.addApproval({ type: '일일입력', title: today + ' 강남 오피스텔 일일보고', requester: '김소장', requestDate: today, status: '대기', detail: 'B1 슬라브 콘크리트 타설 보고' });
+        this.addApproval({ type: '비용', title: '3월 자재비 정산 요청', requester: '김소장', requestDate: yesterday, status: '대기', detail: '철근 D16 20톤 외 3건, 총 ₩15,800,000' });
+        this.addApproval({ type: '안전', title: '시정조치 완료 보고 - B동 추락방지망', requester: '정안전', requestDate: today, status: '대기', detail: 'B동 3층 추락방지망 설치 완료' });
+        this.addApproval({ type: '일일입력', title: yesterday + ' 강남 오피스텔 일일보고', requester: '김소장', requestDate: yesterday, status: '승인', detail: '2F 철근 배근 작업 보고', approver: '박대표', approvedDate: today });
+
+        // Sample documents
+        this.addDocument({ name: '2026년 3월 철근 세금계산서', type: '세금계산서', siteName: '강남 오피스텔 신축공사', uploadDate: today, uploader: '김소장', fileSize: '2.4MB', linkedTo: '자재비 - 철근 D16', note: '(주)한국철강' });
+        this.addDocument({ name: '안전교육 수료증 (3월)', type: '안전서류', siteName: '강남 오피스텔 신축공사', uploadDate: yesterday, uploader: '정안전', fileSize: '1.1MB', linkedTo: '안전관리', note: '참석 24명' });
+        this.addDocument({ name: 'B1 슬라브 타설 사진', type: '사진', siteName: '강남 오피스텔 신축공사', uploadDate: today, uploader: '김소장', fileSize: '8.5MB', linkedTo: '일일입력 - 콘크리트 타설', note: '타설 전/중/후' });
+        this.addDocument({ name: '수원 물류센터 도급계약서', type: '계약서', siteName: '수원 물류센터 증축', uploadDate: '2026-02-28', uploader: '박대표', fileSize: '5.2MB', linkedTo: '현장 - 수원 물류센터', note: '원본 스캔' });
     }
 };

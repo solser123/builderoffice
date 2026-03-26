@@ -5,35 +5,59 @@
 
 var App = {
     currentPage: 'dashboard',
+    isLoggedIn: false,
+    currentUser: null,
 
     pages: {
         dashboard: { title: '대시보드', icon: '📊', module: function () { return Dashboard; } },
+        sites: { title: '현장 관리', icon: '🏗️', module: function () { return Sites; } },
+        workinput: { title: '일일 입력', icon: '📝', module: function () { return WorkInput; } },
         costs: { title: '비용 관리', icon: '💰', module: function () { return Costs; } },
         personnel: { title: '인원 관리', icon: '👷', module: function () { return Personnel; } },
-        materials: { title: '자재 관리', icon: '📦', module: function () { return Materials; } }
+        materials: { title: '자재 관리', icon: '📦', module: function () { return Materials; } },
+        safety: { title: '안전 관리', icon: '🦺', module: function () { return Safety; } },
+        documents: { title: '문서 관리', icon: '📂', module: function () { return Documents; } },
+        approvals: { title: '승인함', icon: '✅', module: function () { return Approvals; } }
     },
 
     init: function () {
-        // Initialize sample data
         Store.initSampleData();
 
-        // Handle hash routing
         var self = this;
-        this.handleRoute();
         window.addEventListener('hashchange', function () { self.handleRoute(); });
 
-        // Update date display
-        this._updateDate();
+        // Check login state
+        var user = Login.getCurrentUser();
+        if (user) {
+            this.isLoggedIn = true;
+            this.currentUser = user;
+            this.handleRoute();
+        } else {
+            this.renderLogin();
+        }
+    },
 
-        // Mobile menu
-        var mobileBtn = document.getElementById('mobileMenuBtn');
-        if (mobileBtn) mobileBtn.addEventListener('click', function () { self.toggleMobileMenu(); });
-
-        var overlay = document.getElementById('sidebarOverlay');
-        if (overlay) overlay.addEventListener('click', function () { self.closeMobileMenu(); });
+    renderLogin: function () {
+        document.getElementById('loginPage').style.display = 'block';
+        document.getElementById('appContainer').style.display = 'none';
+        document.getElementById('loginPage').innerHTML = Login.render();
     },
 
     handleRoute: function () {
+        if (!this.isLoggedIn) {
+            this.renderLogin();
+            return;
+        }
+
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('appContainer').style.display = '';
+
+        // Update user badge
+        var badge = document.getElementById('userBadge');
+        if (badge && this.currentUser) {
+            badge.textContent = this.currentUser.roleLabel + ' · ' + this.currentUser.name;
+        }
+
         var hash = window.location.hash.replace('#', '') || 'dashboard';
         if (this.pages[hash]) {
             this.currentPage = hash;
@@ -42,18 +66,12 @@ var App = {
         }
         this.renderPage();
         this._updateActiveNav();
-        this.closeMobileMenu();
     },
 
     renderPage: function () {
         var page = this.pages[this.currentPage];
         var mod = page.module();
         var content = document.getElementById('pageContent');
-        var titleEl = document.getElementById('pageTitle');
-
-        if (titleEl) {
-            titleEl.innerHTML = page.icon + ' <span>' + page.title + '</span>';
-        }
         content.innerHTML = mod.render();
         window.scrollTo(0, 0);
     },
@@ -68,6 +86,7 @@ var App = {
 
     _updateActiveNav: function () {
         var self = this;
+        // Desktop nav
         var items = document.querySelectorAll('.nav-item');
         for (var i = 0; i < items.length; i++) {
             var item = items[i];
@@ -77,30 +96,27 @@ var App = {
                 item.classList.remove('active');
             }
         }
-    },
-
-    _updateDate: function () {
-        var dateEl = document.getElementById('currentDate');
-        if (dateEl) {
-            var now = new Date();
-            var options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-            dateEl.textContent = now.toLocaleDateString('ko-KR', options);
+        // Mobile bottom nav
+        var mobItems = document.querySelectorAll('.mob-nav-item');
+        for (var j = 0; j < mobItems.length; j++) {
+            var mi = mobItems[j];
+            if (mi.dataset.page === self.currentPage) {
+                mi.classList.add('active');
+            } else {
+                mi.classList.remove('active');
+            }
         }
     },
 
-    // === Mobile Menu ===
-    toggleMobileMenu: function () {
-        var sidebar = document.getElementById('sidebar');
-        var overlay = document.getElementById('sidebarOverlay');
-        if (sidebar) sidebar.classList.toggle('open');
-        if (overlay) overlay.classList.toggle('active');
+    // === Mobile More Menu ===
+    toggleMobileMenu: function (e) {
+        if (e) e.preventDefault();
+        var menu = document.getElementById('mobileMoreMenu');
+        menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
     },
 
-    closeMobileMenu: function () {
-        var sidebar = document.getElementById('sidebar');
-        var overlay = document.getElementById('sidebarOverlay');
-        if (sidebar) sidebar.classList.remove('open');
-        if (overlay) overlay.classList.remove('active');
+    closeMobileMore: function () {
+        document.getElementById('mobileMoreMenu').style.display = 'none';
     },
 
     // === Modal ===
@@ -114,7 +130,6 @@ var App = {
         overlay.onclick = function (e) {
             if (e.target === overlay) self.closeModal();
         };
-
         document.addEventListener('keydown', this._escHandler);
     },
 
