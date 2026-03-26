@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="BuilderOffice - 건설현장 비용, 인원, 자재 통합 관리 시스템">
-  <title>BuilderOffice | V-ERP Portal</title>
+  <meta name="description" content="BuilderOffice - 건설현장 비용, 인원, 자재, 안전, 문서 통합 관리 시스템">
+  <title>BuilderOffice | 건설현장 통합관리</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/portal.css">
   <link rel="icon"
@@ -15,24 +15,34 @@
 </head>
 
 <body class="vibrant-mode">
-  <!-- Dynamic Background Blobs for Option B Style -->
+  <!-- Dynamic Background Blobs -->
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
   <div class="blob blob-3"></div>
 
-  <div class="app-container">
+  <!-- Login Page (shown when not logged in) -->
+  <div id="loginPage" style="display:none;"></div>
+
+  <!-- App Container (shown when logged in) -->
+  <div class="app-container" id="appContainer" style="display:none;">
 
     <!-- Top Global Navigation Bar -->
     <header class="top-gnb">
       <div class="gnb-left">
         <a href="#dashboard" class="logo nav-item" data-page="dashboard">
           <span class="logo-icon">🏗️</span>
-          <span class="logo-text">BuilderOffice V-ERP</span>
+          <span class="logo-text">BuilderOffice</span>
         </a>
         <nav class="gnb-menu">
+          <a href="#dashboard" class="nav-item" data-page="dashboard">대시보드</a>
+          <a href="#sites" class="nav-item" data-page="sites">현장 관리</a>
+          <a href="#workinput" class="nav-item" data-page="workinput">일일 입력</a>
           <a href="#costs" class="nav-item" data-page="costs">비용 관리</a>
           <a href="#personnel" class="nav-item" data-page="personnel">인원 관리</a>
           <a href="#materials" class="nav-item" data-page="materials">자재 관리</a>
+          <a href="#safety" class="nav-item" data-page="safety">안전 관리</a>
+          <a href="#documents" class="nav-item" data-page="documents">문서 관리</a>
+          <a href="#approvals" class="nav-item" data-page="approvals">승인함</a>
         </nav>
       </div>
       <div class="gnb-right">
@@ -40,10 +50,36 @@
           <span class="search-icon">🔍</span>
           <input type="text" placeholder="통합 검색..." id="globalSearch">
         </div>
-        <button class="icon-btn" title="알림">🔔</button>
-        <button class="icon-btn" title="내 정보/설정">👤</button>
+        <button class="icon-btn" title="알림" onclick="App.showToast('알림 기능 준비 중입니다.', 'info')">🔔</button>
+        <span class="user-badge" id="userBadge"></span>
+        <button class="icon-btn" title="로그아웃" onclick="Login.logout()">🚪</button>
       </div>
     </header>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav" id="mobileNav">
+      <a href="#dashboard" class="mob-nav-item" data-page="dashboard"><span>📊</span><small>대시보드</small></a>
+      <a href="#workinput" class="mob-nav-item" data-page="workinput"><span>📝</span><small>일일입력</small></a>
+      <a href="#safety" class="mob-nav-item" data-page="safety"><span>🦺</span><small>안전</small></a>
+      <a href="#approvals" class="mob-nav-item" data-page="approvals"><span>✅</span><small>승인</small></a>
+      <a href="#" class="mob-nav-item" onclick="App.toggleMobileMenu(event)"><span>☰</span><small>더보기</small></a>
+    </nav>
+
+    <!-- Mobile More Menu Overlay -->
+    <div class="mobile-more-menu" id="mobileMoreMenu" style="display:none;">
+      <div class="mobile-more-content">
+        <div class="mobile-more-header">
+          <span>전체 메뉴</span>
+          <button onclick="App.closeMobileMore()">✕</button>
+        </div>
+        <a href="#sites" class="mobile-more-item" onclick="App.closeMobileMore()">🏗️ 현장 관리</a>
+        <a href="#costs" class="mobile-more-item" onclick="App.closeMobileMore()">💰 비용 관리</a>
+        <a href="#personnel" class="mobile-more-item" onclick="App.closeMobileMore()">👷 인원 관리</a>
+        <a href="#materials" class="mobile-more-item" onclick="App.closeMobileMore()">📦 자재 관리</a>
+        <a href="#documents" class="mobile-more-item" onclick="App.closeMobileMore()">📂 문서 관리</a>
+        <a href="#" class="mobile-more-item" onclick="Login.logout(); App.closeMobileMore();">🚪 로그아웃</a>
+      </div>
+    </div>
 
     <!-- Main Content Area -->
     <main class="main-content">
@@ -63,10 +99,16 @@
 
   <!-- Scripts -->
   <script src="js/store.js"></script>
+  <script src="js/login.js"></script>
   <script src="js/dashboard.js"></script>
+  <script src="js/sites.js"></script>
+  <script src="js/workinput.js"></script>
   <script src="js/costs.js"></script>
   <script src="js/personnel.js"></script>
   <script src="js/materials.js"></script>
+  <script src="js/safety.js"></script>
+  <script src="js/documents.js"></script>
+  <script src="js/approvals.js"></script>
   <script src="js/app.js"></script>
 </body>
 
