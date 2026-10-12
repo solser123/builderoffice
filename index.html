@@ -6,12 +6,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="BuilderOffice - 건설현장 비용, 인원, 자재, 안전, 문서 통합 관리 시스템">
   <title>BuilderOffice | 건설현장 통합관리</title>
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/portal.css">
+  <!-- ?v= 는 캐시 무효화용. 배포로 파일을 고칠 때마다 숫자를 올린다.
+       (파일명에 해시가 없어 이 값이 없으면 브라우저가 옛 파일을 계속 쓴다) -->
+  <link rel="stylesheet" href="css/styles.css?v=15">
+  <link rel="stylesheet" href="css/portal.css?v=15">
+  <link rel="stylesheet" href="css/mobile.css?v=15">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+
+  <!-- Firebase SDK (CDN 모듈 방식 - type="module" 필요) -->
+  <script type="module" src="js/firebase-config.js?v=15"></script>
+
+  <!-- Capacitor (Android/iOS 빌드 시 자동 주입됨) -->
+  <!-- <script src="capacitor.js"></script> -->
 </head>
 
 <body class="vibrant-mode">
@@ -36,6 +45,9 @@
         <nav class="gnb-menu">
           <a href="#dashboard" class="nav-item" data-page="dashboard">대시보드</a>
           <a href="#sites" class="nav-item" data-page="sites">현장 관리</a>
+          <a href="#estimates" class="nav-item" data-page="estimates">견적</a>
+          <a href="#contracts" class="nav-item" data-page="contracts">계약</a>
+          <a href="#billings" class="nav-item" data-page="billings">기성</a>
           <a href="#workinput" class="nav-item" data-page="workinput">일일 입력</a>
           <a href="#costs" class="nav-item" data-page="costs">비용 관리</a>
           <a href="#personnel" class="nav-item" data-page="personnel">인원 관리</a>
@@ -43,14 +55,17 @@
           <a href="#safety" class="nav-item" data-page="safety">안전 관리</a>
           <a href="#documents" class="nav-item" data-page="documents">문서 관리</a>
           <a href="#approvals" class="nav-item" data-page="approvals">승인함</a>
+          <a href="#team" class="nav-item admin-only" data-page="team" style="display:none;">팀 관리</a>
         </nav>
       </div>
       <div class="gnb-right">
         <div class="header-search">
           <span class="search-icon">🔍</span>
-          <input type="text" placeholder="통합 검색..." id="globalSearch">
+          <input type="text" placeholder="현장·직원·자재 검색 후 Enter" id="globalSearch"
+            onkeydown="if(event.key==='Enter'){App.search(this.value);this.blur();}">
         </div>
-        <button class="icon-btn" title="알림" onclick="App.showToast('알림 기능 준비 중입니다.', 'info')">🔔</button>
+        <span class="sync-status sync-offline" id="syncStatus" title="동기화 상태"></span>
+        <button class="icon-btn" title="알림" onclick="App.showNotifications()">🔔</button>
         <span class="user-badge" id="userBadge"></span>
         <button class="icon-btn" title="로그아웃" onclick="Login.logout()">🚪</button>
       </div>
@@ -73,10 +88,14 @@
           <button onclick="App.closeMobileMore()">✕</button>
         </div>
         <a href="#sites" class="mobile-more-item" onclick="App.closeMobileMore()">🏗️ 현장 관리</a>
+        <a href="#estimates" class="mobile-more-item" onclick="App.closeMobileMore()">📄 견적 관리</a>
+        <a href="#contracts" class="mobile-more-item" onclick="App.closeMobileMore()">📑 계약 관리</a>
+        <a href="#billings" class="mobile-more-item" onclick="App.closeMobileMore()">💵 기성 관리</a>
         <a href="#costs" class="mobile-more-item" onclick="App.closeMobileMore()">💰 비용 관리</a>
         <a href="#personnel" class="mobile-more-item" onclick="App.closeMobileMore()">👷 인원 관리</a>
         <a href="#materials" class="mobile-more-item" onclick="App.closeMobileMore()">📦 자재 관리</a>
         <a href="#documents" class="mobile-more-item" onclick="App.closeMobileMore()">📂 문서 관리</a>
+        <a href="#team" class="mobile-more-item admin-only" onclick="App.closeMobileMore()" style="display:none;">🎟️ 팀 관리</a>
         <a href="#" class="mobile-more-item" onclick="Login.logout(); App.closeMobileMore();">🚪 로그아웃</a>
       </div>
     </div>
@@ -97,19 +116,36 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <!-- Scripts -->
-  <script src="js/store.js"></script>
-  <script src="js/login.js"></script>
-  <script src="js/dashboard.js"></script>
-  <script src="js/sites.js"></script>
-  <script src="js/workinput.js"></script>
-  <script src="js/costs.js"></script>
-  <script src="js/personnel.js"></script>
-  <script src="js/materials.js"></script>
-  <script src="js/safety.js"></script>
-  <script src="js/documents.js"></script>
-  <script src="js/approvals.js"></script>
-  <script src="js/app.js"></script>
+  <!-- Full-screen Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+    <div class="loading-box">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">불러오는 중...</div>
+    </div>
+  </div>
+
+  <!-- Scripts (로딩 순서 중요: sync → store → db → photos → kosha-forms → modules → app) -->
+  <script src="js/sync.js?v=15"></script>
+  <script src="js/store.js?v=15"></script>
+  <script src="js/db.js?v=15"></script>
+  <script src="js/photos.js?v=15"></script>
+  <script src="js/kosha-forms.js?v=15"></script>
+  <script src="js/mobile.js?v=15"></script>
+  <script src="js/login.js?v=15"></script>
+  <script src="js/onboarding.js?v=15"></script>
+  <script src="js/dashboard.js?v=15"></script>
+  <script src="js/sites.js?v=15"></script>
+  <script src="js/workinput.js?v=15"></script>
+  <script src="js/costs.js?v=15"></script>
+  <script src="js/orders.js?v=15"></script>
+  <script src="js/personnel.js?v=15"></script>
+  <script src="js/materials.js?v=15"></script>
+  <script src="js/safety.js?v=15"></script>
+  <script src="js/kosha-ui.js?v=15"></script>
+  <script src="js/documents.js?v=15"></script>
+  <script src="js/approvals.js?v=15"></script>
+  <script src="js/team.js?v=15"></script>
+  <script src="js/app.js?v=15"></script>
 </body>
 
 </html>

@@ -5,6 +5,7 @@
 
 var Dashboard = {
     render: function () {
+        if (MobileUI.isMobile()) return this.renderMobile();
         var costStats = Store.getCostStats();
         var personnelStats = Store.getPersonnelStats();
         var materialStats = Store.getMaterialStats();
@@ -75,6 +76,9 @@ var Dashboard = {
         var userName = (App.currentUser && App.currentUser.name) || '관리자';
 
         return '<div class="bento-portal">' +
+
+            // 갓 시작한 회사에는 무엇부터 할지 안내한다
+            (typeof Onboarding !== 'undefined' ? Onboarding.render() : '') +
 
             '<div class="bento-header">' +
             '<div class="bento-greeting">' +
@@ -166,6 +170,87 @@ var Dashboard = {
             '</div>' +
 
             '</div>' +
+            '</div>';
+    },
+
+    renderMobile: function () {
+        var costStats = Store.getCostStats();
+        var personnelStats = Store.getPersonnelStats();
+        var approvals = Store.getApprovals();
+        var safetyChecks = Store.getSafetyChecks();
+        var workInputs = Store.getWorkInputs();
+        var sites = Store.getSites();
+        var esc = Store.escapeHtml;
+
+        var pending = approvals.filter(function (a) { return a.status === '대기'; });
+        var needFix = safetyChecks.filter(function (c) { return c.status === '시정필요'; });
+        var todaySafety = safetyChecks.filter(function (c) { return c.date === Store.getToday(); });
+        var activeSites = sites.filter(function (s) { return s.status === '진행중'; });
+        var userName = (App.currentUser && App.currentUser.name) || '관리자';
+        var today = new Date();
+        var dateStr = today.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+
+        // 최근 작업일지 카드
+        var recentHtml = '';
+        var recent = workInputs.slice(0, 3);
+        for (var i = 0; i < recent.length; i++) {
+            var w = recent[i];
+            recentHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">' +
+                '<div><div style="font-size:14px;font-weight:600;">' + esc(w.siteName || '-') + '</div>' +
+                '<div style="font-size:12px;color:var(--text-secondary);">👷 ' + (w.workers ? w.workers.length : 0) + '명 · ' + esc(w.date) + '</div></div>' +
+                '<span class="badge ' + (w.status === '승인완료' ? 'badge-green' : 'badge-orange') + '">' + esc(w.status) + '</span>' +
+                '</div>';
+        }
+        if (!recentHtml) recentHtml = '<div style="text-align:center;padding:20px;color:var(--text-secondary);">최근 내역 없음</div>';
+
+        return '<div style="padding-top:4px;">' +
+            // 인사
+            '<div style="margin-bottom:16px;">' +
+            '<div style="font-size:22px;font-weight:800;">안녕하세요, <span style="background:linear-gradient(135deg,#06b6d4,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">' + esc(userName) + '</span>님 👋</div>' +
+            '<div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">' + dateStr + '</div>' +
+            '</div>' +
+
+            // 주요 지표 그리드
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">' +
+            '<div class="mob-card" style="cursor:pointer;" onclick="App.navigate(\'costs\')">' +
+            '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">💰 이번 달 비용</div>' +
+            '<div style="font-size:18px;font-weight:800;color:#06b6d4;">' + Store.formatCurrency(costStats.monthTotal) + '</div>' +
+            '</div>' +
+            '<div class="mob-card" style="cursor:pointer;" onclick="App.navigate(\'personnel\')">' +
+            '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">👷 금일 투입</div>' +
+            '<div style="font-size:28px;font-weight:800;color:#8b5cf6;">' + personnelStats.todayCount + '<span style="font-size:14px;">명</span></div>' +
+            '</div>' +
+            '<div class="mob-card" style="cursor:pointer;" onclick="App.navigate(\'safety\')">' +
+            '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">' + (needFix.length > 0 ? '⚠️ 시정 필요' : '✅ 안전 양호') + '</div>' +
+            '<div style="font-size:28px;font-weight:800;color:' + (needFix.length > 0 ? '#ef4444' : '#10b981') + ';">' + (needFix.length > 0 ? needFix.length : todaySafety.length) + '<span style="font-size:14px;">건</span></div>' +
+            '</div>' +
+            '<div class="mob-card" style="cursor:pointer;" onclick="App.navigate(\'approvals\')">' +
+            '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">📋 결재 대기</div>' +
+            '<div style="font-size:28px;font-weight:800;color:#f59e0b;">' + pending.length + '<span style="font-size:14px;">건</span></div>' +
+            '</div>' +
+            '</div>' +
+
+            // 빠른 실행
+            '<div class="mob-card" style="margin-bottom:12px;">' +
+            '<div style="font-size:14px;font-weight:700;margin-bottom:14px;">⚡ 빠른 실행</div>' +
+            '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">' +
+            '<div onclick="App.navigate(\'workinput\')" style="text-align:center;cursor:pointer;padding:12px 6px;background:rgba(255,152,158,0.1);border-radius:12px;"><div style="font-size:24px;">📝</div><div style="font-size:11px;margin-top:4px;color:var(--text-secondary);">일일입력</div></div>' +
+            '<div onclick="App.navigate(\'safety\')" style="text-align:center;cursor:pointer;padding:12px 6px;background:rgba(139,92,246,0.1);border-radius:12px;"><div style="font-size:24px;">🦺</div><div style="font-size:11px;margin-top:4px;color:var(--text-secondary);">안전점검</div></div>' +
+            '<div onclick="App.navigate(\'costs\')" style="text-align:center;cursor:pointer;padding:12px 6px;background:rgba(16,185,129,0.1);border-radius:12px;"><div style="font-size:24px;">💰</div><div style="font-size:11px;margin-top:4px;color:var(--text-secondary);">비용입력</div></div>' +
+            '<div onclick="App.navigate(\'personnel\')" style="text-align:center;cursor:pointer;padding:12px 6px;background:rgba(6,182,212,0.1);border-radius:12px;"><div style="font-size:24px;">👷</div><div style="font-size:11px;margin-top:4px;color:var(--text-secondary);">인원관리</div></div>' +
+            '<div onclick="App.navigate(\'sites\')" style="text-align:center;cursor:pointer;padding:12px 6px;background:rgba(245,158,11,0.1);border-radius:12px;"><div style="font-size:24px;">🏗️</div><div style="font-size:11px;margin-top:4px;color:var(--text-secondary);">현장관리</div></div>' +
+            '<div onclick="App.navigate(\'approvals\')" style="text-align:center;cursor:pointer;padding:12px 6px;background:rgba(59,130,246,0.1);border-radius:12px;"><div style="font-size:24px;">✅</div><div style="font-size:11px;margin-top:4px;color:var(--text-secondary);">승인함</div></div>' +
+            '</div></div>' +
+
+            // 최근 작업일지
+            '<div class="mob-card">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+            '<div style="font-size:14px;font-weight:700;">🕐 최근 작업일지</div>' +
+            '<button class="mob-card-btn" style="flex:none;padding:4px 10px;" onclick="App.navigate(\'workinput\')">전체보기</button>' +
+            '</div>' +
+            recentHtml +
+            '</div>' +
+
             '</div>';
     },
 

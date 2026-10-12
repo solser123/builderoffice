@@ -1,4 +1,27 @@
 node_modules/
+android/
+ios/
+dist/
+
+# www/ 는 루트 js·css·index.html 을 복사한 빌드 산출물이다.
+# 원본만 추적하면 되므로 올리지 않는다.
+www/
+
+# Firebase 로컬 캐시·로그
+.firebase/
+firebase-debug.log
+*.log
+
+# 에디터·OS
+.claude/
 .DS_Store
 Thumbs.db
-*.log
+
+# 비밀값 (현재 사용 안 하지만 실수 방지용)
+.env
+.env.local
+*serviceAccount*.json
+*.pem
+*.p12
+*.keystore
+*.jks

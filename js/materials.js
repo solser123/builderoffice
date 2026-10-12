@@ -8,6 +8,7 @@ var Materials = {
     categoryFilter: 'all',
 
     render: function () {
+        if (MobileUI.isMobile()) return this.renderMobile();
         var stats = Store.getMaterialStats();
 
         return '<div class="stat-cards">' +
@@ -270,5 +271,22 @@ var Materials = {
         App.closeModal();
         App.refreshPage();
         App.showToast(materialName + ' ' + (type === 'in' ? '입고' : '출고') + ' 처리되었습니다.', 'success');
+    },
+
+    renderMobile: function () {
+        var materials = Store.getMaterials();
+        var stats = Store.getMaterialStats();
+        var esc = Store.escapeHtml;
+        var cards = '';
+        for (var i = 0; i < materials.length; i++) {
+            cards += MobileUI.materialCard(materials[i], esc);
+        }
+        if (!cards) cards = MobileUI.emptyCard('📦', '등록된 자재가 없습니다', '➕ 자재 추가', 'Materials.showAddModal()');
+        return MobileUI.pageHeader('📦 자재 관리', '추가', 'Materials.showAddModal()') +
+            '<div class="stat-cards">' +
+            '<div class="stat-card"><div class="stat-icon purple">📦</div><div class="stat-info"><div class="stat-label">총 품목</div><div class="stat-value">' + stats.totalItems + '개</div></div></div>' +
+            '<div class="stat-card"><div class="stat-icon red">⚠️</div><div class="stat-info"><div class="stat-label">부족 자재</div><div class="stat-value">' + stats.lowStockItems + '개</div></div></div>' +
+            '</div>' +
+            '<div class="mob-card-list">' + cards + '</div>';
     }
 };

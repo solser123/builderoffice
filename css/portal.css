@@ -11,7 +11,9 @@
     --bg-card-hover: rgba(255, 255, 255, 0.97);
     --text-primary: #1e293b;
     --text-secondary: #475569;
-    --text-muted: #94a3b8;
+    /* #94a3b8은 흰 배경에서 대비 2.6으로 거의 안 보인다 (기준 4.5).
+       보조 설명글 전반에 쓰이므로 읽히는 값으로 올린다. */
+    --text-muted: #64748b;
     --border-color: rgba(203, 213, 225, 0.5);
     --border-color-hover: rgba(99, 102, 241, 0.4);
     --glass-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
@@ -19,6 +21,80 @@
     --glass-border: rgba(255, 255, 255, 0.6);
     --radius-tile: 24px;
     --radius-sm: 12px;
+
+    /* ===== 밝은 테마 보정 =====================================
+       styles.css는 어두운 테마 기준으로 만들어졌다. 이 파일이 화면을
+       밝은 테마로 바꾸므로, 여기서 덮지 않으면 '어두운 배경 + 어두운 글씨'가
+       되어 글자가 보이지 않는다. (입력창·보조버튼이 대표적)
+       styles.css의 모든 색 변수를 빠짐없이 밝은 값으로 재정의한다.
+       ========================================================= */
+    --bg-input: #ffffff;
+    --bg-sidebar: rgba(255, 255, 255, 0.95);
+    --bg-modal-overlay: rgba(15, 23, 42, 0.45);
+
+    /* 흰 바탕에서 충분한 대비를 갖는 강조색 (기존 시안 계열 유지) */
+    --accent-primary: #4f46e5;
+    --accent-primary-light: #6366f1;
+    --accent-primary-dark: #4338ca;
+    --accent-secondary: #7c3aed;
+    --accent-success: #059669;
+    --accent-warning: #b45309;
+    --accent-danger: #dc2626;
+    --accent-info: #2563eb;
+    --text-accent: #4338ca;
+    --danger: #dc2626;
+
+    --gradient-primary: linear-gradient(135deg, #4f46e5, #7c3aed);
+    --gradient-success: linear-gradient(135deg, #059669, #4f46e5);
+    --gradient-warning: linear-gradient(135deg, #d97706, #dc2626);
+
+    /* 밝은 배경에서는 어두운 테마용 그림자가 지저분하게 보인다 */
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.12);
+    --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.12);
+}
+
+/* ===== 입력 요소 가독성 보정 ===== */
+.form-control,
+input.form-control,
+select.form-control,
+textarea.form-control {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid #cbd5e1;
+}
+
+.form-control::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+    /* iOS Safari는 placeholder를 흐리게 처리해 더 안 보인다 */
+    -webkit-text-fill-color: #94a3b8;
+}
+
+.form-control:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* 보조 버튼: 어두운 배경 + 어두운 글씨로 글자가 사라지던 문제 */
+.btn-secondary {
+    background: #ffffff;
+    color: var(--text-primary);
+    border: 1px solid #cbd5e1;
+    font-weight: 600;
+}
+
+.btn-secondary:hover {
+    background: #f8fafc;
+    border-color: var(--accent-primary);
+    color: var(--accent-primary-dark);
+}
+
+/* 상단 검색창도 같은 이유로 보정 */
+.header-search input {
+    background: var(--bg-input);
+    color: var(--text-primary);
 }
 
 /* ===== Body & Background ===== */
@@ -130,6 +206,19 @@ body.vibrant-mode::before {
 .gnb-menu {
     display: flex;
     gap: 4px;
+    /* 메뉴가 13개라 좁은 화면에서 넘친다. 잘리지 않고 가로로 밀리게 한다. */
+    overflow-x: auto;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+.gnb-menu::-webkit-scrollbar {
+    height: 4px;
+}
+
+.gnb-menu::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 999px;
 }
 
 .gnb-menu .nav-item {
@@ -140,6 +229,16 @@ body.vibrant-mode::before {
     padding: 8px 14px;
     border-radius: 10px;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+/* 화면이 좁아지면 글자를 조금 줄여 더 많이 보이게 한다 */
+@media (max-width: 1400px) {
+    .gnb-menu .nav-item {
+        font-size: 0.84rem;
+        padding: 8px 10px;
+    }
 }
 
 .gnb-menu .nav-item:hover,

@@ -1,0 +1,29 @@
+{
+  "name": "builderoffice",
+  "version": "1.0.0",
+  "description": "건설현장 통합 관리 시스템",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve www",
+    "sync": "node -e \"const fs=require('fs-extra');fs.copySync('css','www/css');fs.copySync('js','www/js');fs.copySync('index.html','www/index.html');console.log('www 동기화 완료')\"",
+    "build": "npm run sync && npx cap sync android",
+    "android": "npm run build && npx cap run android",
+    "android:open": "npx cap open android",
+    "deploy:hosting": "npm run sync && firebase deploy --only hosting",
+    "deploy:firestore": "firebase deploy --only firestore",
+    "deploy": "npm run sync && firebase deploy",
+    "cap:sync": "npm run sync && npx cap sync"
+  },
+  "dependencies": {
+    "firebase": "^10.14.1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/cli": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "firebase-tools": "^13.25.0"
+  },
+  "keywords": ["건설", "현장관리", "firebase", "capacitor"],
+  "author": "BuilderOffice",
+  "license": "MIT"
+}

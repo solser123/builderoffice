@@ -1,0 +1,163 @@
+rules_version = '2';
+
+/* =========================================================
+   BuilderOffice Firestore 보안 규칙
+
+   역할: owner(대표) · admin(시스템 관리자) · siteManager(현장소장)
+         · worker(직원) · partner(협력업체)
+
+   핵심 원칙
+   1. 회사 데이터는 같은 회사 멤버만 접근한다.
+   2. 주민등록번호·계좌번호·일당은 personnelPrivate에 분리 보관하고
+      owner/admin과 본인만 읽을 수 있다.
+   3. partner(협력업체)는 읽기 전용이다.
+   4. 삭제는 owner/admin만 가능하다.
+   5. 권한 상승(본인이 본인 역할을 올리는 것)을 차단한다.
+   6. 가입은 초대 코드로만 가능하다. 코드에 적힌 역할만 받을 수 있다.
+   ========================================================= */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== 헬퍼 =====
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function memberPath(companyId) {
+      return /databases/$(database)/documents/companies/$(companyId)/members/$(request.auth.uid);
+    }
+
+    function isMember(companyId) {
+      return isSignedIn() && exists(memberPath(companyId));
+    }
+
+    function myRole(companyId) {
+      return get(memberPath(companyId)).data.role;
+    }
+
+    // 대표·시스템 관리자
+    function isAdmin(companyId) {
+      return isMember(companyId) && myRole(companyId) in ['owner', 'admin'];
+    }
+
+    // 현장 데이터를 입력할 수 있는 역할 (협력업체 제외)
+    function canWrite(companyId) {
+      return isMember(companyId)
+        && myRole(companyId) in ['owner', 'admin', 'siteManager', 'worker'];
+    }
+
+    // 회사 문서에 기록된 소유자인지 (최초 대표 등록용)
+    function isCompanyOwnerRecord(companyId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/companies/$(companyId)).data.ownerId == request.auth.uid;
+    }
+
+    // ===== 초대 코드 =====
+    // 코드 자체가 비밀번호 역할을 한다. 코드를 알아야(문서 ID를 알아야) 조회 가능.
+    // list는 전면 차단해야 한다 — 허용하면 전체 코드를 훑어갈 수 있다.
+    match /inviteCodes/{code} {
+      allow get: if isSignedIn();
+      allow list: if false;
+
+      // 발급·수정·삭제는 해당 회사의 owner/admin만
+      allow create: if isSignedIn() && isAdmin(request.resource.data.companyId);
+      allow delete: if isSignedIn() && isAdmin(resource.data.companyId);
+
+      // 관리자는 전체 수정 가능.
+      // 가입자는 사용 횟수 관련 필드만 갱신할 수 있다.
+      allow update: if isSignedIn() && (
+        isAdmin(resource.data.companyId)
+        || request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['usedCount', 'lastUsedAt', 'lastUsedBy'])
+      );
+    }
+
+    // 초대·역할변경으로 부여할 수 있는 역할 (owner는 회사 생성자 1명뿐)
+    function grantableRole(role) {
+      return role in ['admin', 'siteManager', 'worker', 'partner'];
+    }
+
+    // 초대 코드가 이 회사·이 역할에 대해 유효한지 검증
+    function inviteGrants(companyId, code, role) {
+      let inv = get(/databases/$(database)/documents/inviteCodes/$(code)).data;
+      return inv.companyId == companyId
+        && inv.active == true
+        && inv.role == role
+        && (inv.maxUses == 0 || inv.usedCount < inv.maxUses);
+    }
+
+    // ===== 사용자 프로필 =====
+    // 본인만 접근. companyId/role은 최초 가입 시 정해지고 이후 본인이 못 바꾼다.
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.companyId == resource.data.companyId
+        && request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    // ===== 회사 =====
+    match /companies/{companyId} {
+      allow read: if isMember(companyId);
+      // 회사를 만들 때 자기 자신을 소유자로 지정해야 한다
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isAdmin(companyId);
+      allow delete: if false;
+
+      // --- 멤버 명부 ---
+      match /members/{memberId} {
+        allow read: if isMember(companyId);
+
+        // 생성 경로는 셋뿐이다:
+        //  (1) 관리자가 직접 추가 (대표 역할은 부여 불가)
+        //  (2) 회사를 방금 만든 본인이 최초 대표로 등록
+        //      ⚠️ 회사 문서의 ownerId와 대조한다. 이 대조가 없으면
+        //         아무나 남의 회사에 자신을 'owner'로 넣을 수 있다.
+        //  (3) 유효한 초대 코드로 본인이 가입 (코드에 적힌 역할만)
+        allow create: if (isAdmin(companyId) && grantableRole(request.resource.data.role))
+          || (isSignedIn() && request.auth.uid == memberId
+              && request.resource.data.role == 'owner'
+              && isCompanyOwnerRecord(companyId))
+          || (isSignedIn() && request.auth.uid == memberId
+              && grantableRole(request.resource.data.role)
+              && inviteGrants(companyId, request.resource.data.inviteCode,
+                              request.resource.data.role));
+
+        // 역할 변경·추방은 관리자만.
+        // ⚠️ 대표 문서를 못 고치게 막는 것만으로는 부족하다.
+        //    관리자가 자기 문서를 'owner'로 바꾸면 아무도 못 건드리는 계정이 된다.
+        //    부여 가능한 역할을 화이트리스트로 제한해 대표 승격 자체를 막는다.
+        allow update: if isAdmin(companyId)
+          && resource.data.role != 'owner'
+          && grantableRole(request.resource.data.role);
+        allow delete: if isAdmin(companyId) && resource.data.role != 'owner';
+      }
+
+      // --- 개인정보 분리 보관 (주민등록번호·계좌번호·일당) ---
+      match /personnelPrivate/{docId} {
+        allow read: if isAdmin(companyId)
+          || (isMember(companyId) && resource.data.uid == request.auth.uid);
+        allow create, update: if isAdmin(companyId);
+        allow delete: if isAdmin(companyId);
+      }
+
+      // --- 그 외 현장 운영 데이터 ---
+      //
+      // ⚠️ Firestore 규칙은 여러 match가 겹치면 OR로 평가된다.
+      //    이 와일드카드는 members / personnelPrivate 와도 겹치므로,
+      //    제외하지 않으면 위에서 건 제한이 통째로 무력화된다.
+      match /{collection}/{docId} {
+        allow read: if isMember(companyId)
+          && !(collection in ['personnelPrivate']);
+        allow create, update: if canWrite(companyId)
+          && !(collection in ['personnelPrivate', 'members']);
+        allow delete: if isAdmin(companyId)
+          && !(collection in ['personnelPrivate', 'members']);
+      }
+    }
+  }
+}

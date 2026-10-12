@@ -7,6 +7,7 @@ var Approvals = {
     statusFilter: 'all',
 
     render: function () {
+        if (MobileUI.isMobile()) return this.renderMobile();
         var approvals = Store.getApprovals();
         var pending = approvals.filter(function (a) { return a.status === '대기'; });
         var approved = approvals.filter(function (a) { return a.status === '승인'; });
@@ -87,7 +88,6 @@ var Approvals = {
     reject: function (id) {
         var reason = prompt('반려 사유를 입력해주세요:');
         if (reason === null) return;
-
         Store.updateApproval(id, {
             status: '반려',
             approver: (App.currentUser && App.currentUser.name) || '관리자',
@@ -96,5 +96,29 @@ var Approvals = {
         });
         App.refreshPage();
         App.showToast('반려 처리되었습니다.', 'info');
+    },
+
+    renderMobile: function () {
+        var approvals = Store.getApprovals();
+        var pending = approvals.filter(function (a) { return a.status === '대기'; });
+        var filtered = this.statusFilter === 'all' ? approvals :
+            approvals.filter(function (a) { return a.status === Approvals.statusFilter; });
+        var esc = Store.escapeHtml;
+        var cards = '';
+        for (var i = 0; i < filtered.length; i++) {
+            cards += MobileUI.approvalCard(filtered[i], esc);
+        }
+        if (!cards) cards = MobileUI.emptyCard('✅', '승인 대기 항목이 없습니다', '', '');
+        return MobileUI.pageHeader('✅ 승인함') +
+            '<div class="stat-cards">' +
+            '<div class="stat-card"><div class="stat-icon orange">⏳</div><div class="stat-info"><div class="stat-label">대기</div><div class="stat-value">' + pending.length + '건</div></div></div>' +
+            '<div class="stat-card"><div class="stat-icon blue">📋</div><div class="stat-info"><div class="stat-label">전체</div><div class="stat-value">' + approvals.length + '건</div></div></div>' +
+            '</div>' +
+            '<div style="display:flex;gap:8px;margin-bottom:14px;">' +
+            '<button class="tab-btn ' + (this.statusFilter === 'all' ? 'active' : '') + '" onclick="Approvals.statusFilter=\'all\';App.refreshPage()">전체</button>' +
+            '<button class="tab-btn ' + (this.statusFilter === '대기' ? 'active' : '') + '" onclick="Approvals.statusFilter=\'대기\';App.refreshPage()">대기</button>' +
+            '<button class="tab-btn ' + (this.statusFilter === '승인' ? 'active' : '') + '" onclick="Approvals.statusFilter=\'승인\';App.refreshPage()">승인</button>' +
+            '</div>' +
+            '<div class="mob-card-list">' + cards + '</div>';
     }
 };

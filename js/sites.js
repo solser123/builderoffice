@@ -4,7 +4,82 @@
    ======================================= */
 
 var Sites = {
+    /**
+     * 현장별 수지 현황 — 대표가 한눈에 보는 표.
+     * "어느 현장에 얼마 썼고, 얼마 받아야 하고, 남는지"를 한 줄로 보여준다.
+     * 급여·단가가 섞이므로 대표·관리자에게만 노출한다.
+     */
+    _renderFinanceTable: function () {
+        if (!App.isAdminUser()) return '';
+
+        var fin = Store.getAllSiteFinance();
+        if (!fin.rows.length) return '';
+
+        var esc = Store.escapeHtml;
+        var t = fin.total;
+        var rows = '';
+
+        for (var i = 0; i < fin.rows.length; i++) {
+            var r = fin.rows[i];
+            // 계약도 지출도 없는 현장은 표를 어지럽히므로 건너뛴다
+            if (!r.contractAmount && !r.spent && !r.billed) continue;
+
+            var profitColor = r.profit >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
+            rows += '<tr>' +
+                '<td style="font-weight:600;color:var(--text-primary);">' + esc(r.siteName) +
+                '<br><span style="font-size:11px;color:var(--text-muted);">' + esc(r.client || '') + '</span></td>' +
+                '<td class="amount">' + Store.formatCurrency(r.contractAmount) + '</td>' +
+                '<td class="amount">' + Store.formatCurrency(r.billed) +
+                '<br><span style="font-size:11px;color:var(--text-muted);">' + r.billRate + '%</span></td>' +
+                '<td class="amount" style="color:var(--accent-success);">' + Store.formatCurrency(r.received) + '</td>' +
+                '<td class="amount" style="color:' + (r.receivable > 0 ? 'var(--accent-danger)' : 'var(--text-muted)') + ';">' +
+                Store.formatCurrency(r.receivable) + '</td>' +
+                '<td class="amount">' + Store.formatCurrency(r.spent) +
+                (r.unpaidCost > 0 ? '<br><span style="font-size:11px;color:var(--accent-warning);">미지급 ' +
+                    Store.formatCurrency(r.unpaidCost) + '</span>' : '') + '</td>' +
+                '<td class="amount" style="color:' + profitColor + ';font-weight:700;">' +
+                Store.formatCurrency(r.profit) + '</td>' +
+                '</tr>';
+        }
+
+        if (!rows) return '';
+
+        var totalProfitColor = t.profit >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
+        var footer = '<tr class="payroll-footer">' +
+            '<td><strong>합 계</strong></td>' +
+            '<td class="amount"><strong>' + Store.formatCurrency(t.contractAmount) + '</strong></td>' +
+            '<td class="amount"><strong>' + Store.formatCurrency(t.billed) + '</strong></td>' +
+            '<td class="amount"><strong>' + Store.formatCurrency(t.received) + '</strong></td>' +
+            '<td class="amount"><strong>' + Store.formatCurrency(t.receivable) + '</strong></td>' +
+            '<td class="amount"><strong>' + Store.formatCurrency(t.spent) + '</strong></td>' +
+            '<td class="amount" style="color:' + totalProfitColor + ';"><strong>' +
+            Store.formatCurrency(t.received - t.spent) + '</strong></td>' +
+            '</tr>';
+
+        var hqNote = t.hqSpent > 0
+            ? '<p>📌 위 표에는 <strong>본사 비용 ' + Store.formatCurrency(t.hqSpent) +
+              '</strong>이 빠져 있습니다. 본사까지 포함한 실제 손익은 <strong style="color:' +
+              (t.profit >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)') + ';">' +
+              Store.formatCurrency(t.profit) + '</strong>입니다.</p>'
+            : '';
+
+        return '<div class="card" style="margin-bottom:20px;">' +
+            '<div class="toolbar"><div class="toolbar-left">' +
+            '<h3 style="font-size:16px;font-weight:700;">💹 현장별 수지 현황</h3></div>' +
+            '<div style="display:flex;gap:8px;">' +
+            '<button class="btn btn-secondary btn-sm" onclick="App.navigate(\'billings\')">💵 기성 관리</button>' +
+            '<button class="btn btn-secondary btn-sm" onclick="App.navigate(\'costs\')">💰 비용 관리</button>' +
+            '</div></div>' +
+            '<div class="table-container"><table><thead><tr>' +
+            '<th>현장</th><th>계약금액</th><th>기성 청구</th><th>입금</th><th>미수금</th><th>지출</th><th>손익</th>' +
+            '</tr></thead><tbody>' + rows + footer + '</tbody></table></div>' +
+            '<div class="payroll-info">' + hqNote +
+            '<p style="color:var(--text-muted);">손익 = 입금 − 지출 (아직 청구 안 한 금액은 빠져 있습니다)</p></div>' +
+            '</div>';
+    },
+
     render: function () {
+        if (MobileUI.isMobile()) return this.renderMobile();
         var sites = Store.getSites();
         var esc = Store.escapeHtml;
 
@@ -47,6 +122,7 @@ var Sites = {
             '<div class="stat-card"><div class="stat-icon green">🔨</div><div class="stat-info"><div class="stat-label">진행중</div><div class="stat-value">' + sites.filter(function (s) { return s.status === '진행중'; }).length + '개</div></div></div>' +
             '<div class="stat-card"><div class="stat-icon orange">📅</div><div class="stat-info"><div class="stat-label">준비중</div><div class="stat-value">' + sites.filter(function (s) { return s.status === '준비중'; }).length + '개</div></div></div>' +
             '</div>' +
+            Sites._renderFinanceTable() +
             '<div class="card">' +
             '<div class="toolbar">' +
             '<div class="toolbar-left"><span style="color:var(--text-muted);font-size:13px;">총 ' + sites.length + '개 현장</span></div>' +
@@ -190,5 +266,22 @@ var Sites = {
             App.refreshPage();
             App.showToast('현장이 삭제되었습니다.', 'info');
         }
+    },
+
+    renderMobile: function () {
+        var sites = Store.getSites();
+        var esc = Store.escapeHtml;
+        var activeSites = sites.filter(function (s) { return s.status === '진행중'; }).length;
+        var cards = '';
+        for (var i = 0; i < sites.length; i++) {
+            cards += MobileUI.siteCard(sites[i], esc);
+        }
+        if (!cards) cards = MobileUI.emptyCard('🏗️', '등록된 현장이 없습니다', '➕ 현장 추가', 'Sites.showAddModal()');
+        return MobileUI.pageHeader('🏗️ 현장 관리', '추가', 'Sites.showAddModal()') +
+            '<div class="stat-cards">' +
+            '<div class="stat-card"><div class="stat-icon green">🏗️</div><div class="stat-info"><div class="stat-label">진행중 현장</div><div class="stat-value">' + activeSites + '개</div></div></div>' +
+            '<div class="stat-card"><div class="stat-icon blue">📋</div><div class="stat-info"><div class="stat-label">전체 현장</div><div class="stat-value">' + sites.length + '개</div></div></div>' +
+            '</div>' +
+            '<div class="mob-card-list">' + cards + '</div>';
     }
 };
