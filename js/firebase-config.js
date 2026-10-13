@@ -15,7 +15,8 @@ import {
     createUserWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
-    updateProfile
+    updateProfile,
+    sendPasswordResetEmail
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
     initializeFirestore,
@@ -97,6 +98,7 @@ if (isPlaceholder) {
     window.FB = {
         // Auth
         signInWithEmailAndPassword: (email, pw) => signInWithEmailAndPassword(auth, email, pw),
+        sendPasswordResetEmail: (email) => sendPasswordResetEmail(auth, email),
         createUserWithEmailAndPassword: (email, pw) => createUserWithEmailAndPassword(auth, email, pw),
         signOut: () => signOut(auth),
         onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),

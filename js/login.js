@@ -133,7 +133,8 @@ var Login = {
             '</div>' +
             '<button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="Login.doLogin()">🔐 로그인</button>' +
             '<button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="Login.showJoin()">🎟️ 업체 코드로 참여</button>' +
-            '<div style="text-align:center;margin-top:14px;">' +
+            '<div style="text-align:center;margin-top:14px;display:flex;justify-content:center;gap:14px;">' +
+            '<a href="#" onclick="Login.forgotPassword();return false;" style="color:var(--text-secondary);font-size:13px;text-decoration:underline;">비밀번호를 잊으셨나요?</a>' +
             '<a href="#" onclick="Login.showRegister();return false;" style="color:var(--text-secondary);font-size:13px;text-decoration:underline;">업체를 새로 등록하시나요?</a>' +
             '</div>' +
             '</div>' +
@@ -210,10 +211,40 @@ var Login = {
     ],
 
     // Firebase 이메일 로그인
+    // 비밀번호 재설정 — 가입한 이메일로 재설정 링크를 보낸다
+    forgotPassword: async function () {
+        var errEl = document.getElementById('loginError');
+        var typed = (document.getElementById('loginEmail').value || '').trim();
+        var email = prompt('가입하신 이메일을 입력하세요.\n그 주소로 비밀번호 재설정 메일을 보냅니다.', typed);
+        if (email === null) return;
+        email = email.trim();
+        if (!email) { if (errEl) errEl.textContent = '이메일을 입력해주세요.'; return; }
+
+        if (typeof FB === 'undefined' || !FB.sendPasswordResetEmail) {
+            if (errEl) errEl.textContent = '서버에 연결할 수 없어 재설정 메일을 보낼 수 없습니다.';
+            return;
+        }
+
+        try {
+            if (errEl) { errEl.style.color = 'var(--text-secondary)'; errEl.textContent = '재설정 메일을 보내는 중...'; }
+            await FB.sendPasswordResetEmail(email);
+            App.showToast(email + ' 로 재설정 메일을 보냈습니다. (스팸함도 확인하세요)', 'success');
+            if (errEl) { errEl.style.color = 'var(--accent-success)'; errEl.textContent = '✅ 메일을 확인해 새 비밀번호를 설정하세요.'; }
+        } catch (e) {
+            if (errEl) errEl.style.color = 'var(--danger)';
+            var msg = '재설정 메일 발송 실패';
+            if (e.code === 'auth/invalid-email') msg = '이메일 형식이 올바르지 않습니다.';
+            else if (e.code === 'auth/user-not-found') msg = '가입되지 않은 이메일입니다. 이메일을 확인해주세요.';
+            else if (e.code === 'auth/too-many-requests') msg = '요청이 많습니다. 잠시 후 다시 시도해주세요.';
+            if (errEl) errEl.textContent = msg;
+        }
+    },
+
     doLogin: async function () {
         var email = (document.getElementById('loginEmail').value || '').trim();
         var pw = document.getElementById('loginPw').value;
         var errEl = document.getElementById('loginError');
+        if (errEl) errEl.style.color = 'var(--danger)';
         if (!email || !pw) { errEl.textContent = '이메일과 비밀번호를 입력해주세요.'; return; }
 
         // Firebase 미설정 시 로컬 계정으로 로그인
