@@ -92,6 +92,9 @@ var Dashboard = {
             '</div>' +
             '</div>' +
 
+            // 대표·관리자: 회사 전체 자금 흐름을 맨 위에 — "돈이 어떻게 흐르는가"
+            Dashboard._renderCashFlow() +
+
             '<div class="bento-grid">' +
 
             // [A] 이번 달 비용
@@ -173,6 +176,87 @@ var Dashboard = {
             '</div>';
     },
 
+    /* ===== 회사 자금 흐름 (대표·관리자 전용) =====================
+       "받을 돈 / 나갈 돈 / 순 포지션"을 맨 앞에 두고,
+       이번 달 실제 현금 이동과 현장별 수지를 함께 보여준다.
+       건설회사를 "돈의 흐름"으로 경영하는 화면. */
+    _renderCashFlow: function () {
+        if (!App.isAdminUser || !App.isAdminUser()) return '';
+
+        var cf = Store.getCashFlow();
+        var fin = Store.getAllSiteFinance();
+        // 아무 데이터도 없으면(갓 시작) 숨긴다 — 온보딩이 먼저다
+        if (!cf.contractAmount && !cf.billed && !cf.totalSpent && !cf.receivable && !cf.payable) return '';
+
+        var f = Store.formatCurrency;
+        var posColor = cf.netPosition >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
+        var netColor = cf.netThisMonth >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
+
+        // 자금 경고: 나갈 돈이 받을 돈보다 많으면
+        var warn = '';
+        if (cf.payable > cf.receivable && cf.payable > 0) {
+            warn = '<div class="cf-warn">⚠️ 나갈 돈이 받을 돈보다 ' +
+                f(cf.payable - cf.receivable) + ' 많습니다. 자금 계획을 확인하세요' +
+                (cf.held > 0 ? ' (홀딩 ' + f(cf.held) + ' 포함)' : '') + '.</div>';
+        }
+
+        function card(label, value, color, sub, onclick) {
+            return '<div class="cf-card' + (onclick ? ' cf-clickable' : '') + '"' +
+                (onclick ? ' onclick="' + onclick + '"' : '') + '>' +
+                '<div class="cf-label">' + label + '</div>' +
+                '<div class="cf-value" style="color:' + color + ';">' + value + '</div>' +
+                (sub ? '<div class="cf-sub">' + sub + '</div>' : '') + '</div>';
+        }
+
+        // 현장별 수지 (상위 5개, 손익순)
+        var rows = fin.rows.filter(function (r) { return r.contractAmount || r.spent || r.billed; });
+        rows.sort(function (a, b) { return b.profit - a.profit; });
+        var siteRows = '';
+        for (var i = 0; i < Math.min(6, rows.length); i++) {
+            var r = rows[i];
+            var pc = r.profit >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
+            siteRows += '<tr onclick="App.navigate(\'sites\')" style="cursor:pointer;">' +
+                '<td style="font-weight:600;">' + Store.escapeHtml(r.siteName) + '</td>' +
+                '<td class="amount">' + f(r.contractAmount) + '</td>' +
+                '<td class="amount">' + f(r.received) + '</td>' +
+                '<td class="amount" style="color:' + (r.receivable > 0 ? 'var(--accent-danger)' : 'var(--text-muted)') + ';">' + f(r.receivable) + '</td>' +
+                '<td class="amount">' + f(r.spent) + '</td>' +
+                '<td class="amount" style="color:' + pc + ';font-weight:700;">' + f(r.profit) + '</td>' +
+                '</tr>';
+        }
+        var siteTable = siteRows
+            ? '<div class="cf-section"><div class="cf-section-head">' +
+              '<h3>🏗️ 현장별 수지</h3>' +
+              '<button class="btn btn-secondary btn-sm" onclick="App.navigate(\'sites\')">전체 보기 →</button></div>' +
+              '<div class="table-container"><table><thead><tr>' +
+              '<th>현장</th><th>계약</th><th>입금</th><th>미수금</th><th>지출</th><th>손익</th>' +
+              '</tr></thead><tbody>' + siteRows + '</tbody></table></div></div>'
+            : '';
+
+        return '<div class="cf-block">' +
+            '<div class="cf-block-head">' +
+            '<h2>💹 회사 자금 흐름</h2>' +
+            '<span class="cf-period">' + cf.period.replace('-', '년 ') + '월 기준</span>' +
+            '</div>' +
+            warn +
+            '<div class="cf-cards">' +
+            card('💰 받을 돈', f(cf.receivable), 'var(--accent-info)', '미수 기성 (청구·미입금)', "App.navigate('billings')") +
+            card('📤 나갈 돈', f(cf.payable), 'var(--accent-warning)',
+                '미지급 ' + f(cf.toPay) + (cf.held > 0 ? ' · 홀딩 ' + f(cf.held) : ''), "App.navigate('costs')") +
+            card('⚖️ 순 자금', f(cf.netPosition), posColor, '받을 돈 − 나갈 돈') +
+            card('📅 이번 달 현금', (cf.netThisMonth >= 0 ? '+' : '') + f(cf.netThisMonth), netColor,
+                '입금 ' + f(cf.inThisMonth) + ' · 지급 ' + f(cf.outThisMonth)) +
+            '</div>' +
+            '<div class="cf-cards cf-cards-sub">' +
+            card('계약 총액', f(cf.contractAmount), 'var(--text-primary)', cf.siteCount + '개 현장') +
+            card('기성 청구 누계', f(cf.billed), 'var(--text-primary)', '입금 ' + f(cf.received)) +
+            card('총 지출', f(cf.totalSpent), 'var(--text-primary)', '본사 ' + f(cf.hqSpent)) +
+            card('현재 손익', f(cf.profit), cf.profit >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)', '입금 − 전체지출') +
+            '</div>' +
+            siteTable +
+            '</div>';
+    },
+
     renderMobile: function () {
         var costStats = Store.getCostStats();
         var personnelStats = Store.getPersonnelStats();
@@ -209,6 +293,9 @@ var Dashboard = {
             '<div style="font-size:22px;font-weight:800;">안녕하세요, <span style="background:linear-gradient(135deg,#06b6d4,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">' + esc(userName) + '</span>님 👋</div>' +
             '<div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">' + dateStr + '</div>' +
             '</div>' +
+
+            // 대표·관리자: 회사 자금 흐름 (모바일에서도 맨 위)
+            Dashboard._renderCashFlow() +
 
             // 주요 지표 그리드
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">' +

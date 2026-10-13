@@ -105,10 +105,32 @@ var Sync = {
      * 로그인 직후 호출. localStorage를 먼저 캐시에 올려 화면이 즉시 뜨게 한 뒤,
      * Firestore 최초 로드 → 실시간 구독 → 밀린 큐 전송 순으로 진행한다.
      */
+    CACHE_OWNER_KEY: 'builderoffice_cache_company',
+
+    // 공용 PC·계정 전환 대비: localStorage 캐시가 다른 회사 것이면 비운다.
+    // (같은 회사면 유지해 오프라인/빠른 로딩을 살린다)
+    _ensureCacheOwner: function (companyId) {
+        var owner = null;
+        try { owner = localStorage.getItem(this.CACHE_OWNER_KEY); } catch (e) {}
+        if (owner && owner !== companyId) {
+            var keys = this.allKeys();
+            for (var i = 0; i < keys.length; i++) {
+                try { localStorage.removeItem(keys[i]); } catch (e) {}
+            }
+            try { localStorage.removeItem(this.QUEUE_KEY); } catch (e) {}
+            this._queue = [];
+            console.info('[Sync] 회사 전환 감지 — 이전 회사 로컬 캐시를 비웠습니다.');
+        }
+        try { localStorage.setItem(this.CACHE_OWNER_KEY, companyId); } catch (e) {}
+    },
+
     bootstrap: async function (companyId, userId) {
         this.teardown();
         this.companyId = companyId;
         this.userId = userId;
+
+        // 다른 회사 데이터가 남아 있으면 먼저 비운다
+        this._ensureCacheOwner(companyId);
 
         // 1) localStorage → 메모리 캐시 (오프라인이어도 여기까지는 항상 성공)
         var keys = this.allKeys();

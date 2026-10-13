@@ -2383,3 +2383,121 @@ select.form-control {
         grid-template-columns: 1fr;
     }
 }
+
+/* =======================================
+   회사 자금 흐름 블록 (대시보드 상단, 대표용)
+   ======================================= */
+
+.cf-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.cf-block-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.cf-block-head h2 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+
+.cf-period {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.cf-warn {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: var(--accent-warning);
+    border-radius: var(--border-radius-sm);
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 14px;
+}
+
+.cf-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+}
+
+.cf-cards-sub {
+    margin-top: 12px;
+}
+
+.cf-cards-sub .cf-card {
+    background: var(--bg-input);
+    padding: 12px 14px;
+}
+
+.cf-cards-sub .cf-value {
+    font-size: 18px;
+}
+
+.cf-card {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 16px 18px;
+}
+
+.cf-clickable {
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.cf-clickable:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+}
+
+.cf-label {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.cf-value {
+    font-size: 22px;
+    font-weight: 800;
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+
+.cf-sub {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+.cf-section {
+    margin-top: 20px;
+}
+
+.cf-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.cf-section-head h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}

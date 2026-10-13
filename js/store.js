@@ -1164,6 +1164,80 @@ const Store = {
         return { rows: rows, total: total };
     },
 
+    /**
+     * 회사 전체 자금 흐름 — 경영 대시보드의 핵심.
+     * "받을 돈(미수 기성) vs 나갈 돈(미지급·홀딩 비용)"으로 자금 포지션을 본다.
+     * 이번 달 실제 입/출금과, 앞으로 들어올/나갈 돈을 함께 집계한다.
+     *
+     * 건설회사 관점: 현장은 돈을 버는 단위, 본사는 돈을 쓰는 단위.
+     * 그래서 현장 손익과 본사 비용을 나눠서 합산한다.
+     */
+    getCashFlow: function (year, month) {
+        var now = new Date();
+        year = year || now.getFullYear();
+        month = month || (now.getMonth() + 1);
+        var prefix = year + '-' + String(month).padStart(2, '0');
+        var self = this;
+
+        var billings = this.getBillings();
+        var costs = this.getCosts().map(function (c) { return self.normalizeCost(c); });
+
+        function sum(arr, f) {
+            return arr.reduce(function (s, x) { return s + (Number(f(x)) || 0); }, 0);
+        }
+
+        // ── 누적 포지션 ──
+        var billed = sum(billings, function (b) { return b.billAmount; });
+        var received = sum(billings, function (b) { return b.paidAmount; });
+        var receivable = billed - received;                       // 받을 돈(미수 기성)
+
+        var toPay = sum(costs.filter(function (c) {               // 나갈 돈(승인·미지급)
+            return c.approvalStatus === '승인' && c.paymentStatus === '미지급';
+        }), function (c) { return c.amount; });
+        var held = sum(costs.filter(function (c) {                // 홀딩(자금 보류)
+            return c.paymentStatus === '홀딩';
+        }), function (c) { return c.amount; });
+        var pendingApproval = sum(costs.filter(function (c) {     // 승인 대기(아직 미확정)
+            return c.approvalStatus === '대기';
+        }), function (c) { return c.amount; });
+        var payable = toPay + held;                               // 나갈 돈 합계
+
+        // ── 이번 달 실제 현금 이동 ──
+        var inThisMonth = sum(billings.filter(function (b) {
+            return b.paidDate && b.paidDate.indexOf(prefix) === 0;
+        }), function (b) { return b.paidAmount; });
+        var outThisMonth = sum(costs.filter(function (c) {
+            return c.paymentStatus === '지급완료' && c.paidDate && c.paidDate.indexOf(prefix) === 0;
+        }), function (c) { return c.amount; });
+
+        // ── 현장 수지 / 본사 ──
+        var fin = this.getAllSiteFinance();
+
+        return {
+            period: prefix,
+            // 포지션
+            receivable: receivable,
+            payable: payable,
+            toPay: toPay,
+            held: held,
+            pendingApproval: pendingApproval,
+            netPosition: receivable - payable,     // 받을 돈 − 나갈 돈
+            // 이번 달 현금
+            inThisMonth: inThisMonth,
+            outThisMonth: outThisMonth,
+            netThisMonth: inThisMonth - outThisMonth,
+            // 누적
+            contractAmount: fin.total.contractAmount,
+            billed: billed,
+            received: received,
+            totalSpent: fin.total.spentWithHq,
+            hqSpent: fin.total.hqSpent,
+            siteProfit: fin.total.received - fin.total.spent,   // 현장 손익(본사 제외)
+            profit: fin.total.profit,                            // 본사 포함 손익
+            siteCount: fin.rows.length
+        };
+    },
+
     /* ===== 문서 체계 =============================================
        회사 실제 폴더(공무부/관리부/안전)와 파일명 규칙을 그대로 옮겼다.
        예: "2. 견적서_당진 현대제철 Duct 점검홀 이설_제일플랜트.xlsx"
