@@ -355,10 +355,10 @@ var Costs = {
             '<div class="form-group"><label>메모</label><input type="text" class="form-control" id="costMemo" value="' + esc(cost.memo || '') + '" placeholder="상세 내용"></div>';
     },
 
-    showAddModal: function () {
+    showAddModal: function (preset) {
         App.showModal(
             '<div class="modal-header"><h3>💰 비용 추가</h3><button class="modal-close" onclick="App.closeModal()">&times;</button></div>' +
-            '<div class="modal-body">' + this._formFields(null) +
+            '<div class="modal-body">' + this._formFields(preset || null) +
             '<div class="payroll-info"><p>📌 새 비용은 <strong>승인 대기</strong> 상태로 등록됩니다. ' +
             '결재 후 지급 상태를 관리하세요.</p></div>' +
             '</div>' +

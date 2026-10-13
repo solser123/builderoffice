@@ -190,6 +190,9 @@ var App = {
     },
 
     renderPage: function () {
+        // 현장관리를 벗어나면 현장 허브 모드를 해제한다 (메뉴로 돌아오면 목록부터)
+        if (this.currentPage !== 'sites' && typeof Sites !== 'undefined') Sites.detailId = null;
+
         var page = this.pages[this.currentPage];
         var mod = page.module();
         var content = document.getElementById('pageContent');

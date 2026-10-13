@@ -433,6 +433,30 @@ var WorkInput = {
         data.status = '제출완료';
         var saved = Store.addWorkInput(data);
 
+        // 현장 지출 → 비용 관리로 자동 등록 (한 번만 적으면 비용에도 뜬다)
+        // 현장에서 쓴 실비이므로 승인·지급완료로 잡고, 출처를 표시한다.
+        if (data.expenses && data.expenses.length) {
+            var catMap = { '식대': '기타', '유류비': '운송비', '잡자재': '자재비', '장비비': '장비비', '운송비': '운송비', '기타': '기타' };
+            for (var ei = 0; ei < data.expenses.length; ei++) {
+                var ex = data.expenses[ei];
+                if (!ex.amount || ex.amount <= 0) continue;
+                Store.addCost({
+                    date: data.date,
+                    siteName: data.siteName,
+                    category: catMap[ex.category] || '기타',
+                    name: ex.category + (ex.memo ? ' - ' + ex.memo : ''),
+                    amount: Number(ex.amount) || 0,
+                    vendor: '',
+                    approvalStatus: '승인',
+                    paymentStatus: '지급완료',
+                    paidDate: data.date,
+                    fromWorkInput: true,
+                    workInputId: saved.id,
+                    memo: '일일입력 자동 등록'
+                });
+            }
+        }
+
         // 근로자공수자동입력: 현장별 공수 자동 기록
         var allPersonnel = Store.getPersonnel();
         var allSites = Store.getSites();

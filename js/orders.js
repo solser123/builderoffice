@@ -131,10 +131,10 @@ var Estimates = {
 
     setFilter: function (f) { this.filter = f; App.refreshPage(); },
 
-    showModal: function (id) {
+    showModal: function (id, preset) {
         var e = id ? Store.getEstimates().find(function (x) { return x.id === id; }) : null;
         var esc = Store.escapeHtml;
-        e = e || {};
+        e = e || preset || {};
 
         App.showModal(
             '<div class="modal-header"><h3>' + (id ? '✏️ 견적 수정' : '📄 견적 등록') + '</h3>' +

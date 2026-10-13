@@ -4,6 +4,7 @@
    ======================================= */
 
 var Sites = {
+    detailId: null,     // 현장 허브로 보고 있는 현장 id (null이면 목록)
     /**
      * 현장별 수지 현황 — 대표가 한눈에 보는 표.
      * "어느 현장에 얼마 썼고, 얼마 받아야 하고, 남는지"를 한 줄로 보여준다.
@@ -79,6 +80,13 @@ var Sites = {
     },
 
     render: function () {
+        // 현장 하나를 선택했으면 그 현장의 허브를 보여준다
+        if (this.detailId) {
+            var sel = Store.getSites().find(function (s) { return s.id === Sites.detailId; });
+            if (sel) return this._renderHub(sel);
+            this.detailId = null;   // 삭제된 현장이면 목록으로
+        }
+
         if (MobileUI.isMobile()) return this.renderMobile();
         var sites = Store.getSites();
         var esc = Store.escapeHtml;
@@ -178,32 +186,150 @@ var Sites = {
         App.showToast('현장이 등록되었습니다.', 'success');
     },
 
+    // 현장을 누르면 그 현장의 '허브'로 들어간다 (모든 것이 한 화면에)
     showSiteDetail: function (id) {
-        var site = Store.getSites().find(function (s) { return s.id === id; });
-        if (!site) return;
-        var esc = Store.escapeHtml;
-        var row = function (label, val) {
-            return '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-muted);">' + label + '</span><span style="color:var(--text-primary);font-weight:600;">' + val + '</span></div>';
-        };
+        this.detailId = id;
+        App.refreshPage();
+        window.scrollTo(0, 0);
+    },
 
-        var html = '<div class="modal-header"><h3>🏗️ ' + esc(site.name) + '</h3><button class="modal-close" onclick="App.closeModal()">&times;</button></div>' +
-            '<div class="modal-body"><div style="display:grid;gap:0;">' +
-            row('발주처', esc(site.client || '-')) +
-            row('현장소장', esc(site.manager || '-')) +
-            row('주소', esc(site.address || '-')) +
-            row('착공일', esc(site.startDate || '-')) +
-            row('준공예정일', esc(site.endDate || '-')) +
-            row('도급금액', Store.formatCurrency(site.contractAmount || 0)) +
-            row('공정률', (site.progress || 0) + '%') +
-            row('상태', '<span class="badge ' + (site.status === '진행중' ? 'badge-green' : 'badge-orange') + '">' + esc(site.status) + '</span>') +
-            row('비고', esc(site.memo || '-')) +
-            '</div></div>' +
-            '<div class="modal-footer">' +
-            '<button class="btn btn-danger" onclick="Sites.confirmDelete(\'' + id + '\')">삭제</button>' +
-            '<button class="btn btn-secondary" onclick="App.closeModal()">닫기</button>' +
-            '<button class="btn btn-primary" onclick="App.closeModal(); Sites.showEditModal(\'' + id + '\')">수정</button>' +
+    backToList: function () {
+        this.detailId = null;
+        App.refreshPage();
+    },
+
+    /* ===== 현장 허브 =============================================
+       하나의 현장에 연결된 견적·계약·기성·비용·일일보고·문서·안전을
+       한 화면에 모은다. 여기서 추가하면 현장이 자동 지정돼,
+       메뉴마다 현장을 다시 고르고 따로 입력할 필요가 없다.
+       ============================================================ */
+    _renderHub: function (site) {
+        var esc = Store.escapeHtml;
+        var f = Store.formatCurrency;
+        var name = site.name;
+        var sid = site.id;
+        var isAdmin = App.isAdminUser && App.isAdminUser();
+
+        function by(arr) { return arr.filter(function (x) { return x.siteName === name; }); }
+        var estimates = by(Store.getEstimates());
+        var contracts = by(Store.getContracts());
+        var billings = by(Store.getBillings());
+        var costs = by(Store.getCosts()).map(function (c) { return Store.normalizeCost(c); });
+        var works = by(Store.getWorkInputs());
+        var kosha = by(Store._get('builderoffice_koshaRecords') || []);
+        var fin = Store.getSiteFinance(name);
+        var firstContract = contracts.length ? contracts[0].id : '';
+
+        // ── 수지 요약 (대표·관리자) ──
+        var finance = '';
+        if (isAdmin) {
+            var pc = fin.profit >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
+            function m(l, v, c, s) {
+                return '<div class="cf-card"><div class="cf-label">' + l + '</div>' +
+                    '<div class="cf-value" style="color:' + (c || 'var(--text-primary)') + ';font-size:18px;">' + v + '</div>' +
+                    (s ? '<div class="cf-sub">' + s + '</div>' : '') + '</div>';
+            }
+            finance = '<div class="cf-cards" style="margin-bottom:18px;">' +
+                m('계약금액', f(fin.contractAmount), null, estimates.length + '건 견적') +
+                m('기성 청구', f(fin.billed), null, fin.billRate + '% · 입금 ' + f(fin.received)) +
+                m('미수금', f(fin.receivable), fin.receivable > 0 ? 'var(--accent-danger)' : 'var(--text-muted)', '받을 돈') +
+                m('지출', f(fin.spent), null, (fin.unpaidCost > 0 ? '미지급 ' + f(fin.unpaidCost) : '')) +
+                m('손익', f(fin.profit), pc, '입금 − 지출') +
+                '</div>';
+        }
+
+        // ── 섹션 헬퍼 ──
+        function section(icon, title, addLabel, addAction, items, emptyMsg) {
+            var body = items.length ? items.join('') :
+                '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">' + emptyMsg + '</div>';
+            return '<div class="hub-section">' +
+                '<div class="hub-section-head">' +
+                '<h3>' + icon + ' ' + title + (items.length ? ' <span class="hub-count">' + items.length + '</span>' : '') + '</h3>' +
+                (addAction ? '<button class="btn btn-secondary btn-sm" onclick="' + addAction + '">' + addLabel + '</button>' : '') +
+                '</div>' +
+                '<div class="hub-list">' + body + '</div>' +
+                '</div>';
+        }
+        function line(left, right, sub) {
+            return '<div class="hub-item">' +
+                '<div class="hub-item-main">' + left + (sub ? '<div class="hub-item-sub">' + sub + '</div>' : '') + '</div>' +
+                '<div class="hub-item-right">' + right + '</div></div>';
+        }
+
+        // 견적
+        var estItems = estimates.slice(0, 5).map(function (e) {
+            return line(esc(e.title), OrderUtil.badge(e.status), f(e.amount) + (e.date ? ' · ' + esc(e.date) : ''));
+        });
+        // 계약
+        var ctItems = contracts.slice(0, 5).map(function (c) {
+            return line(esc(c.title), OrderUtil.badge(c.status), f(c.amount));
+        });
+        // 기성
+        var blItems = billings.slice().sort(function (a, b) { return (a.round || 0) - (b.round || 0); }).slice(0, 6).map(function (b) {
+            var unpaid = (b.billAmount || 0) - (b.paidAmount || 0);
+            return line((b.round || '-') + '회차 · ' + f(b.billAmount), OrderUtil.badge(b.status),
+                '입금 ' + f(b.paidAmount) + (unpaid > 0 ? ' · 미수 ' + f(unpaid) : ''));
+        });
+        // 비용
+        var costItems = costs.slice(0, 6).map(function (c) {
+            return line(esc(c.name), Costs._paymentBadge ? Costs._paymentBadge(c) : c.paymentStatus,
+                esc(c.category) + ' · ' + f(c.amount) + (c.fromWorkInput ? ' · 📝일보' : ''));
+        });
+        // 일일보고
+        var workItems = works.slice(0, 5).map(function (w) {
+            return line(esc(w.date) + (w.weather ? ' · ' + esc(w.weather) : ''),
+                '<span class="badge ' + (w.status === '승인완료' ? 'badge-green' : 'badge-orange') + '">' + esc(w.status) + '</span>',
+                (w.workers ? w.workers.length + '명' : '') + (w.workContent ? ' · ' + esc(w.workContent).slice(0, 24) : ''));
+        });
+        // 문서 (단계별 필수 현황)
+        var docStages = Store.getSiteDocStatus(name);
+        var docItems = docStages.filter(function (st) { return st.totalRequired > 0; }).map(function (st) {
+            var ok = st.complete;
+            return line(st.label, ok ? '<span class="badge badge-green">완료</span>' :
+                '<span class="badge badge-orange">' + st.haveRequired + '/' + st.totalRequired + '</span>',
+                st.items.filter(function (it) { return it.required && !it.count; }).map(function (it) { return it.name; }).join(', ') || '필수 서류 준비됨');
+        });
+        // 안전
+        var koshaItems = kosha.slice(0, 5).map(function (r) {
+            return line(esc(r.formName || r.formCode), '<span class="badge badge-blue">' + esc(r.date) + '</span>',
+                esc(r.writer || '') + (r.photos && r.photos.length ? ' · 📷' + r.photos.length : ''));
+        });
+
+        var sections =
+            section('📄', '견적', '+ 견적', "Estimates.showModal(null,{siteName:'" + esc(name).replace(/'/g, "\\'") + "',client:'" + esc(site.client || '').replace(/'/g, "\\'") + "'})", estItems, '견적이 없습니다') +
+            section('📑', '계약', '+ 계약', "Contracts.showModal(null,{siteName:'" + esc(name).replace(/'/g, "\\'") + "',client:'" + esc(site.client || '').replace(/'/g, "\\'") + "'})", ctItems, '계약이 없습니다') +
+            section('💵', '기성', '+ 기성', firstContract ? "Billings.showModal(null,{contractId:'" + firstContract + "'})" : "App.navigate('contracts')", blItems, '기성 내역이 없습니다') +
+            section('💰', '비용', '+ 비용', "Sites.addCostForSite('" + esc(name).replace(/'/g, "\\'") + "')", costItems, '비용이 없습니다') +
+            section('📝', '작업일보', '+ 일보', "App.navigate('workinput')", workItems, '작업일보가 없습니다') +
+            section('📂', '문서', '+ 문서', "Sites.addDocForSite('" + esc(name).replace(/'/g, "\\'") + "')", docItems, '필수 서류 단계가 없습니다') +
+            section('🦺', '안전 서류', '+ 안전', "App.navigate('safety')", koshaItems, '안전 기록이 없습니다');
+
+        var statusBadge = site.status === '진행중' ? 'badge-green' : site.status === '준비중' ? 'badge-orange' : 'badge-blue';
+
+        return '<div class="hub">' +
+            '<div class="hub-top">' +
+            '<button class="btn btn-secondary btn-sm" onclick="Sites.backToList()">← 현장 목록</button>' +
+            '<div class="hub-title"><h1>🏗️ ' + esc(site.name) + '</h1>' +
+            '<span class="badge ' + statusBadge + '">' + esc(site.status) + '</span></div>' +
+            '<button class="btn btn-secondary btn-sm" onclick="Sites.showEditModal(\'' + sid + '\')">현장 정보 수정</button>' +
+            '</div>' +
+            '<div class="hub-meta">' +
+            '<span>👤 ' + esc(site.client || '발주처 미정') + '</span>' +
+            '<span>👷 ' + esc(site.manager || '소장 미정') + '</span>' +
+            '<span>📍 ' + esc(site.address || '-') + '</span>' +
+            '<span>📅 ' + esc(site.startDate || '') + ' ~ ' + esc(site.endDate || '') + '</span>' +
+            '</div>' +
+            finance +
+            '<div class="hub-grid">' + sections + '</div>' +
             '</div>';
-        App.showModal(html);
+    },
+
+    // 허브에서 현장 지정된 채로 비용/문서 추가
+    addCostForSite: function (siteName) {
+        if (typeof Costs !== 'undefined' && Costs.showAddModal) Costs.showAddModal({ siteName: siteName });
+    },
+    addDocForSite: function (siteName) {
+        if (typeof Documents !== 'undefined') { Documents.siteFilter = siteName; Documents.showAddModal(); }
     },
 
     showEditModal: function (id) {
